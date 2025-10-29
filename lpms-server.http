@@ -1,0 +1,6 @@
+@lpms_server_HostAddress = http://localhost:4098
+
+GET {{lpms_server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
