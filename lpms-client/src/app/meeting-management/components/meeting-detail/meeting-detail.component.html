@@ -1,0 +1,156 @@
+<div class="meeting-detail-container" *ngIf="meeting as m">
+  <div class="header">
+    <h1>{{ m.title || ('Meeting ' + m.meetingId) }}</h1>
+  </div>
+
+  <section class="meeting-info">
+    <div><strong>Scheduled:</strong> {{ formatDate(m.scheduledDate) }}</div>
+    <div><strong>Status:</strong> {{ m.status }}</div>
+    <div><strong>Location:</strong> {{ m.location || '-' }}</div>
+    <div><strong>Board:</strong> {{ m.boardId || '-' }}</div>
+    <div><strong>Committee:</strong> {{ m.committeeId || '-' }}</div>
+    <div><strong>Attendance count:</strong> {{ m.attendanceCount }}</div>
+  </section>
+
+  <div class="split-layout">
+    <section class="panel">
+      <h2>Minutes</h2>
+      <ul class="list">
+        <li *ngFor="let minute of minutes">
+          <div class="list-item">
+            <div class="meta">{{ formatDate(minute.recordedDate) }}</div>
+            <div class="content">{{ minute.content }}</div>
+          </div>
+        </li>
+      </ul>
+
+      <form class="form" (ngSubmit)="addMinute()">
+        <textarea
+          [(ngModel)]="newMinuteContent"
+          name="minuteContent"
+          placeholder="Add meeting minute"
+          rows="3"
+        ></textarea>
+        <input
+          type="text"
+          [(ngModel)]="newMinuteDocumentId"
+          name="minuteDocumentId"
+          placeholder="Linked document ID (optional)"
+        />
+        <button type="submit" class="btn btn-primary">Add Minute</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Resolutions</h2>
+      <ul class="list">
+        <li *ngFor="let res of resolutions">
+          <div class="list-item">
+            <div class="meta">
+              <div><strong>{{ res.title }}</strong></div>
+              <div>Status: {{ res.status }}</div>
+              <div>Due: {{ formatDate(res.dueDate) || '-' }}</div>
+            </div>
+            <div class="content">{{ res.description }}</div>
+            <div class="actions">
+              <button type="button" class="btn-small" (click)="setResolutionStatus(res, 'Pending')">Pending</button>
+              <button type="button" class="btn-small" (click)="setResolutionStatus(res, 'InProgress')">In Progress</button>
+              <button type="button" class="btn-small" (click)="setResolutionStatus(res, 'Completed')">Completed</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <form class="form" (ngSubmit)="addResolution()">
+        <input
+          type="text"
+          [(ngModel)]="newResolutionTitle"
+          name="resolutionTitle"
+          placeholder="Resolution title"
+          required
+        />
+        <textarea
+          [(ngModel)]="newResolutionDescription"
+          name="resolutionDescription"
+          placeholder="Resolution description"
+          rows="3"
+        ></textarea>
+        <input
+          type="date"
+          [(ngModel)]="newResolutionDueDate"
+          name="resolutionDueDate"
+        />
+        <input
+          type="text"
+          [(ngModel)]="newResolutionResponsibleParty"
+          name="resolutionResponsibleParty"
+          placeholder="Responsible party"
+        />
+        <button type="submit" class="btn btn-primary">Add Resolution</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="attendance-panel">
+    <h2>Attendance</h2>
+
+    <div class="attendance-form">
+      <div class="attendance-row">
+        <label>
+          Name
+          <input type="text" [(ngModel)]="newAttendeeName" name="attendeeName" />
+        </label>
+        <label>
+          Role
+          <input type="text" [(ngModel)]="newAttendeeRole" name="attendeeRole" />
+        </label>
+        <label>
+          Present
+          <select [(ngModel)]="newAttendeePresent" name="attendeePresent">
+            <option [ngValue]="true">Yes</option>
+            <option [ngValue]="false">No</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Notes
+        <textarea [(ngModel)]="newAttendeeNotes" name="attendeeNotes" rows="2"></textarea>
+      </label>
+
+      <div class="attendance-actions">
+        <button type="button" class="btn" (click)="addAttendanceItem()">Add To List</button>
+        <button type="button" class="btn btn-primary" (click)="saveAttendance()" [disabled]="attendanceItems.length === 0">Save Attendance</button>
+      </div>
+    </div>
+
+    <div class="attendance-table" *ngIf="attendanceItems.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Present</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of attendanceItems; let i = index">
+            <td>{{ item.attendeeName }}</td>
+            <td>{{ item.attendeeRole || '-' }}</td>
+            <td>{{ item.present ? 'Yes' : 'No' }}</td>
+            <td>{{ item.notes || '' }}</td>
+            <td>
+              <button type="button" class="btn-small" (click)="removeAttendanceItem(i)">Remove</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="loading" *ngIf="!meeting && isLoading">
+  Loading meeting...
+</div>

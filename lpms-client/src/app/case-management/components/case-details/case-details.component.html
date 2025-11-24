@@ -1,0 +1,348 @@
+<div class="case-details-container">
+  <div class="header">
+    <button class="btn btn-secondary" (click)="goBack()">
+      ← Back to Cases
+    </button>
+    <div class="actions" *ngIf="case">
+      <button class="btn btn-primary" (click)="editCase()">Edit</button>
+      <button class="btn btn-danger" (click)="deleteCase()">Delete</button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading case details...
+  </div>
+
+  <div class="case-content" *ngIf="!isLoading && case">
+    <div class="case-header">
+      <div class="title-section">
+        <h1>{{ case?.title }}</h1>
+        <span class="case-id">#{{ case?.caseNumber }}</span>
+      </div>
+
+      <div class="badges">
+        <span class="badge" [ngClass]="getStatusClass(case?.status)">
+          {{ case?.status }}
+        </span>
+        <span class="badge" [ngClass]="getPriorityClass(case?.priority)">
+          {{ case?.priority }}
+        </span>
+      </div>
+    </div>
+
+    <div class="due-date-alert" *ngIf="isOverdue()">
+      ⚠️ This case is overdue!
+    </div>
+
+    <div class="due-date-warning" *ngIf="isDueSoon() && !isOverdue()">
+      ⏰ This case is due soon!
+    </div>
+
+    <div class="details-grid">
+      <!-- Main Information -->
+      <div class="detail-section main-section">
+        <h2>Description</h2>
+        <p class="description">{{ case?.description }}</p>
+
+        <div class="notes" *ngIf="case?.outcome">
+          <h3>Outcome</h3>
+          <p>{{ case?.outcome }}</p>
+        </div>
+      </div>
+
+      <!-- Side Information -->
+      <div class="detail-section side-section">
+        <h2>Case Information</h2>
+
+        <div class="info-block">
+          <div class="info-item">
+            <span class="label">Assigned To:</span>
+            <span class="value">{{ case?.assignedLawyer?.fullName || 'Unassigned' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Court:</span>
+            <span class="value">{{ case?.court?.name }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="label">Date Filed:</span>
+            <span class="value">{{ case?.dateFiled | date:'medium' }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="case?.startDate">
+            <span class="label">Start Date:</span>
+            <span class="value">{{ case?.startDate | date:'medium' }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="case?.endDate">
+            <span class="label">End Date:</span>
+            <span class="value" [class.overdue]="isOverdue()" [class.due-soon]="isDueSoon()">
+              {{ case?.endDate | date:'medium' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parties -->
+    <div class="detail-section" *ngIf="case?.parties?.length">
+      <h2>Parties</h2>
+      <table class="details-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Name</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cp of case.parties">
+            <td>{{ cp.role }}</td>
+            <td>{{ cp.party.fullName }}</td>
+            <td>{{ cp.party.partyType || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Hearings -->
+    <div class="detail-section">
+      <h2>Hearings</h2>
+
+      <form class="inline-form" #hearingForm="ngForm" (ngSubmit)="createHearing()">
+        <input
+          type="date"
+          name="hearingDate"
+          [(ngModel)]="newHearing.date"
+          required
+        />
+        <input
+          type="time"
+          name="hearingTime"
+          [(ngModel)]="newHearing.time"
+          required
+        />
+        <input
+          type="text"
+          name="hearingType"
+          [(ngModel)]="newHearing.hearingType"
+          placeholder="Type"
+        />
+        <input
+          type="text"
+          name="hearingLocation"
+          [(ngModel)]="newHearing.location"
+          placeholder="Location"
+        />
+        <input
+          type="text"
+          name="hearingRemarks"
+          [(ngModel)]="newHearing.remarks"
+          placeholder="Remarks"
+        />
+        <button type="submit" class="btn btn-primary" [disabled]="!newHearing.date || !newHearing.time">
+          Add Hearing
+        </button>
+      </form>
+
+      <div class="edit-section" *ngIf="editingHearingId">
+        <h3>Edit Hearing</h3>
+        <form class="inline-form" #hearingEditForm="ngForm" (ngSubmit)="updateHearing()">
+          <input
+            type="date"
+            name="editHearingDate"
+            [(ngModel)]="editHearing.date"
+          />
+          <input
+            type="time"
+            name="editHearingTime"
+            [(ngModel)]="editHearing.time"
+          />
+          <input
+            type="text"
+            name="editHearingType"
+            [(ngModel)]="editHearing.hearingType"
+            placeholder="Type"
+          />
+          <input
+            type="text"
+            name="editHearingLocation"
+            [(ngModel)]="editHearing.location"
+            placeholder="Location"
+          />
+          <input
+            type="text"
+            name="editHearingRemarks"
+            [(ngModel)]="editHearing.remarks"
+            placeholder="Remarks"
+          />
+          <input
+            type="text"
+            name="editHearingStatus"
+            [(ngModel)]="editHearing.status"
+            placeholder="Status"
+          />
+          <button type="submit" class="btn btn-primary">
+            Save Changes
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancelEditHearing()">
+            Cancel
+          </button>
+        </form>
+      </div>
+
+      <table class="details-table" *ngIf="case?.hearings?.length; else noHearings">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Court</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of case.hearings">
+            <td>{{ h.date | date:'shortDate' }}</td>
+            <td>{{ h.time }}</td>
+            <td>{{ h.court?.name || '-' }}</td>
+            <td>{{ h.hearingType || '-' }}</td>
+            <td>{{ h.location || '-' }}</td>
+            <td>{{ h.status }}</td>
+            <td>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="startEditHearing(h)">
+                Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noHearings>
+        <p>No hearings yet.</p>
+      </ng-template>
+    </div>
+
+    <!-- Deadlines -->
+    <div class="detail-section">
+      <h2>Deadlines</h2>
+
+      <form class="inline-form" #deadlineForm="ngForm" (ngSubmit)="createDeadline()">
+        <input
+          type="date"
+          name="deadlineDueDate"
+          [(ngModel)]="newDeadline.dueDate"
+          required
+        />
+        <input
+          type="text"
+          name="deadlineDescription"
+          [(ngModel)]="newDeadline.description"
+          placeholder="Description"
+          required
+        />
+        <select
+          name="deadlinePriority"
+          [(ngModel)]="newDeadline.priority"
+        >
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+        <input
+          type="text"
+          name="deadlineNotes"
+          [(ngModel)]="newDeadline.notes"
+          placeholder="Notes"
+        />
+        <button type="submit" class="btn btn-primary" [disabled]="!newDeadline.dueDate || !newDeadline.description">
+          Add Deadline
+        </button>
+      </form>
+
+      <div class="edit-section" *ngIf="editingDeadlineId">
+        <h3>Edit Deadline</h3>
+        <form class="inline-form" #deadlineEditForm="ngForm" (ngSubmit)="updateDeadline()">
+          <input
+            type="date"
+            name="editDeadlineDueDate"
+            [(ngModel)]="editDeadline.dueDate"
+          />
+          <input
+            type="text"
+            name="editDeadlineDescription"
+            [(ngModel)]="editDeadline.description"
+            placeholder="Description"
+          />
+          <select
+            name="editDeadlinePriority"
+            [(ngModel)]="editDeadline.priority"
+          >
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+          <input
+            type="text"
+            name="editDeadlineNotes"
+            [(ngModel)]="editDeadline.notes"
+            placeholder="Notes"
+          />
+          <label class="inline-label">
+            <input
+              type="checkbox"
+              name="editDeadlineCompleted"
+              [(ngModel)]="editDeadline.isCompleted"
+            />
+            Completed
+          </label>
+          <button type="submit" class="btn btn-primary">
+            Save Changes
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancelEditDeadline()">
+            Cancel
+          </button>
+        </form>
+      </div>
+
+      <table class="details-table" *ngIf="case?.deadlines?.length; else noDeadlines">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Due Date</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of case.deadlines">
+            <td>{{ d.description }}</td>
+            <td>{{ d.dueDate | date:'shortDate' }}</td>
+            <td>{{ d.priority }}</td>
+            <td>{{ d.isCompleted ? 'Completed' : 'Open' }}</td>
+            <td>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="startEditDeadline(d)">
+                Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noDeadlines>
+        <p>No deadlines yet.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <div class="not-found" *ngIf="!isLoading && !case">
+    <h2>Case Not Found</h2>
+    <p>The requested case could not be found.</p>
+    <button class="btn btn-primary" (click)="goBack()">
+      Return to Cases
+    </button>
+  </div>
+</div>

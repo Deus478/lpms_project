@@ -1,0 +1,165 @@
+<div class="document-view-container">
+  <div class="header">
+    <button class="btn btn-secondary" (click)="goBack()">
+      ← Back to Documents
+    </button>
+    <div class="actions" *ngIf="document">
+      <button class="btn btn-primary" (click)="downloadDocument()">
+        ⬇️ Download
+      </button>
+      <button 
+        class="btn btn-secondary" 
+        (click)="archiveDocument()"
+        *ngIf="document.status !== 'ARCHIVED'"
+      >
+        📦 Archive
+      </button>
+      <button class="btn btn-danger" (click)="deleteDocument()">
+        🗑️ Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading document...
+  </div>
+
+  <div class="document-content" *ngIf="!isLoading && document">
+    <!-- Document Header -->
+    <div class="document-header">
+      <div class="file-icon-large">📄</div>
+      <div class="document-title-section">
+        <h1>{{ document.originalName }}</h1>
+        <div class="badges">
+          <span class="badge" [ngClass]="getCategoryClass(document.category || DocumentCategory.OTHER)">
+  {{ document.category ? document.category.replace('_', ' ') : 'Uncategorized' }}
+</span>
+          <span class="badge" [ngClass]="getStatusClass(document.status)">
+            {{ document.status.replace('_', ' ') }}
+          </span>
+        <span class="badge" [ngClass]="getAccessLevelClass(document.accessLevel)"
+>
+  {{ document.accessLevel }}
+</span>
+            <span *ngIf="document.isEncrypted">🔒 </span>{{ document.accessLevel }}
+         
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Alert -->
+    <div class="security-alert" *ngIf="document.isEncrypted">
+      <strong>🔒 Encrypted Document</strong> - This document is encrypted for security. Access is restricted to authorized personnel only.
+    </div>
+
+    <!-- Archive Notice -->
+    <div class="archive-notice" *ngIf="document.status === 'ARCHIVED' && document.archivedAt">
+      <strong>📦 Archived Document</strong> - This document was archived on {{ formatDate(document.archivedAt) }} by {{ document.archivedBy }}
+    </div>
+
+    <div class="details-grid">
+      <!-- Main Information -->
+      <div class="detail-section">
+        <h2>Document Information</h2>
+
+        <div class="info-block">
+          <div class="info-item">
+            <span class="label">File Name:</span>
+            <span class="value">{{ document.fileName }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="label">File Size:</span>
+            <span class="value">{{ formatFileSize(document.fileSize) }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="label">File Type:</span>
+            <span class="value">{{ document.mimeType }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="label">Version:</span>
+            <span class="value">v{{ document.version }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="document.checksum">
+            <span class="label">Checksum:</span>
+            <span class="value checksum">{{ document.checksum }}</span>
+          </div>
+        </div>
+
+        <div class="description-section" *ngIf="document.description">
+          <h3>Description</h3>
+          <p>{{ document.description }}</p>
+        </div>
+
+        <div class="tags-section" *ngIf="document.tags && document.tags.length > 0">
+          <h3>Tags</h3>
+          <div class="tag-list">
+            <span class="tag" *ngFor="let tag of document.tags">{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="detail-section">
+        <h2>Metadata</h2>
+
+        <div class="info-block">
+          <div class="info-item">
+            <span class="label">Uploaded By:</span>
+            <span class="value">{{ document.uploadedBy }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="label">Uploaded At:</span>
+            <span class="value">{{ formatDate(document.uploadedAt) }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="document.lastModifiedBy">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ document.lastModifiedBy }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="document.lastModifiedAt">
+            <span class="label">Last Modified At:</span>
+            <span class="value">{{ formatDate(document.lastModifiedAt) }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="document.caseId">
+            <span class="label">Case ID:</span>
+            <span class="value">
+              <a [routerLink]="['/case-management/details', document.caseId]">
+                #{{ document.caseId }}
+              </a>
+            </span>
+          </div>
+        </div>
+
+        <div class="security-info">
+          <h3>Security Information</h3>
+          <div class="info-item">
+            <span class="label">Encryption:</span>
+            <span class="value">
+              <span *ngIf="document.isEncrypted" class="encrypted">🔒 Encrypted</span>
+              <span *ngIf="!document.isEncrypted" class="not-encrypted">Not Encrypted</span>
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">Access Level:</span>
+            <span class="value">{{ document.accessLevel }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="not-found" *ngIf="!isLoading && !document">
+    <h2>Document Not Found</h2>
+    <p>The requested document could not be found.</p>
+    <button class="btn btn-primary" (click)="goBack()">
+      Return to Documents
+    </button>
+  </div>
+</div>

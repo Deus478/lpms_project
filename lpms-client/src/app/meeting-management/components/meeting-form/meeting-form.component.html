@@ -1,0 +1,50 @@
+<div class="meeting-form-container">
+  <h1>{{ isEditMode ? 'Edit Meeting' : 'Schedule Meeting' }}</h1>
+
+  <form (ngSubmit)="onSubmit()" class="form">
+    <label>
+      Title
+      <input type="text" [(ngModel)]="title" name="title" />
+    </label>
+
+    <label>
+      Board ID
+      <input type="number" [(ngModel)]="boardId" name="boardId" />
+    </label>
+
+    <label>
+      Committee ID
+      <input type="number" [(ngModel)]="committeeId" name="committeeId" />
+    </label>
+
+    <label>
+      Scheduled Date / Time
+      <input type="datetime-local" [(ngModel)]="scheduledDateLocal" name="scheduledDateLocal" required />
+    </label>
+
+    <label>
+      Location
+      <input type="text" [(ngModel)]="location" name="location" />
+    </label>
+
+    <label>
+      Agenda
+      <textarea [(ngModel)]="agenda" name="agenda" rows="3"></textarea>
+    </label>
+
+    <label *ngIf="isEditMode">
+      Status
+      <select [(ngModel)]="status" name="status">
+        <option value="Scheduled">Scheduled</option>
+        <option value="InProgress">InProgress</option>
+        <option value="Completed">Completed</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </label>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" class="btn" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+</div>

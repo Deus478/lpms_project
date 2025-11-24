@@ -1,0 +1,258 @@
+
+<div class="case-form-container">
+  <div class="form-header">
+    <h1>{{ isEditMode ? 'Edit Case' : 'Create New Case' }}</h1>
+  </div>
+
+  <div class="loading" *ngIf="isLoading && isEditMode">
+    Loading case data...
+  </div>
+
+  <form [formGroup]="caseForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading || !isEditMode">
+    <div class="form-grid">
+      <!-- Case Number -->
+      <div class="form-group">
+        <label for="caseNumber">Case Number <span class="required">*</span></label>
+        <input
+          type="text"
+          id="caseNumber"
+          formControlName="caseNumber"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('caseNumber')"
+          placeholder="Enter case number"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('caseNumber')">
+          {{ getFieldError('caseNumber') }}
+        </div>
+      </div>
+      <!-- Title -->
+      <div class="form-group full-width">
+        <label for="title">Title <span class="required">*</span></label>
+        <input 
+          type="text" 
+          id="title" 
+          formControlName="title"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('title')"
+          placeholder="Enter case title"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('title')">
+          {{ getFieldError('title') }}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group full-width">
+        <label for="description">Description <span class="required">*</span></label>
+        <textarea 
+          id="description" 
+          formControlName="description"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('description')"
+          placeholder="Enter detailed description"
+          rows="4"
+        ></textarea>
+        <div class="error-message" *ngIf="isFieldInvalid('description')">
+          {{ getFieldError('description') }}
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="form-group">
+        <label for="status">Status <span class="required">*</span></label>
+        <select 
+          id="status" 
+          formControlName="status"
+          class="form-control"
+        >
+          <option *ngFor="let status of caseStatuses" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div class="form-group">
+        <label for="priority">Priority <span class="required">*</span></label>
+        <select 
+          id="priority" 
+          formControlName="priority"
+          class="form-control"
+        >
+          <option *ngFor="let priority of casePriorities" [value]="priority">
+            {{ priority }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Assigned To -->
+      <div class="form-group">
+        <label for="assignedTo">Assigned To</label>
+        <input 
+          type="text" 
+          id="assignedTo" 
+          formControlName="assignedTo"
+          class="form-control"
+          placeholder="Enter assignee name"
+        />
+      </div>
+
+      <!-- Date Filed -->
+      <div class="form-group">
+        <label for="dateFiled">Date Filed <span class="required">*</span></label>
+        <input
+          type="date"
+          id="dateFiled"
+          formControlName="dateFiled"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('dateFiled')"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('dateFiled')">
+          {{ getFieldError('dateFiled') }}
+        </div>
+      </div>
+
+      <!-- Court -->
+      <div class="form-group">
+        <label for="courtId">Court <span class="required">*</span></label>
+        <select
+          id="courtId"
+          formControlName="courtId"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('courtId')"
+        >
+          <option value="">Select court</option>
+          <option *ngFor="let court of courts" [value]="court.courtId">
+            {{ court.name }}
+          </option>
+        </select>
+        <div class="error-message" *ngIf="isFieldInvalid('courtId')">
+          {{ getFieldError('courtId') }}
+        </div>
+      </div>
+
+      <!-- Assigned Lawyer -->
+      <div class="form-group">
+        <label for="assignedLawyerId">Assigned Lawyer <span class="required">*</span></label>
+        <select
+          id="assignedLawyerId"
+          formControlName="assignedLawyerId"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('assignedLawyerId')"
+        >
+          <option value="">Select lawyer</option>
+          <option *ngFor="let lawyer of lawyers" [value]="lawyer.lawyerId">
+            {{ lawyer.fullName }}
+          </option>
+        </select>
+        <div class="error-message" *ngIf="isFieldInvalid('assignedLawyerId')">
+          {{ getFieldError('assignedLawyerId') }}
+        </div>
+      </div>
+
+      <!-- Additional Lawyers -->
+      <div class="form-group">
+        <label for="additionalLawyerIds">Additional Lawyers</label>
+        <select
+          id="additionalLawyerIds"
+          formControlName="additionalLawyerIds"
+          class="form-control"
+          multiple
+        >
+          <option *ngFor="let lawyer of lawyers" [value]="lawyer.lawyerId">
+            {{ lawyer.fullName }}
+          </option>
+        </select>
+        <small class="helper-text">Hold Ctrl (Cmd on Mac) to select multiple lawyers.</small>
+      </div>
+
+      <!-- Due Date -->
+      <div class="form-group">
+        <label for="dueDate">Due Date</label>
+        <input 
+          type="date" 
+          id="dueDate" 
+          formControlName="dueDate"
+          class="form-control"
+        />
+      </div>
+
+      <!-- Tags -->
+      <div class="form-group full-width">
+        <label for="tags">Tags</label>
+        <input 
+          type="text" 
+          id="tags" 
+          formControlName="tags"
+          class="form-control"
+          placeholder="Enter tags separated by commas (e.g., urgent, technical)"
+        />
+        <small class="helper-text">Separate multiple tags with commas</small>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group full-width">
+        <label for="notes">Additional Notes</label>
+        <textarea 
+          id="notes" 
+          formControlName="notes"
+          class="form-control"
+          placeholder="Enter any additional notes"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <!-- Plaintiff Party -->
+      <div class="form-group">
+        <label for="plaintiffPartyId">Plaintiff <span class="required">*</span></label>
+        <select
+          id="plaintiffPartyId"
+          formControlName="plaintiffPartyId"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('plaintiffPartyId')"
+        >
+          <option value="">Select plaintiff</option>
+          <option *ngFor="let party of parties" [value]="party.partyId">
+            {{ party.fullName }}
+          </option>
+        </select>
+        <div class="error-message" *ngIf="isFieldInvalid('plaintiffPartyId')">
+          {{ getFieldError('plaintiffPartyId') }}
+        </div>
+      </div>
+
+      <!-- Defendant Party -->
+      <div class="form-group">
+        <label for="defendantPartyId">Defendant <span class="required">*</span></label>
+        <select
+          id="defendantPartyId"
+          formControlName="defendantPartyId"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('defendantPartyId')"
+        >
+          <option value="">Select defendant</option>
+          <option *ngFor="let party of parties" [value]="party.partyId">
+            {{ party.fullName }}
+          </option>
+        </select>
+        <div class="error-message" *ngIf="isFieldInvalid('defendantPartyId')">
+          {{ getFieldError('defendantPartyId') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="isLoading"
+      >
+        {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Case' : 'Create Case') }}
+      </button>
+    </div>
+  </form>
+</div>

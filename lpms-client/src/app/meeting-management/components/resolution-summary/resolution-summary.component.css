@@ -1,0 +1,40 @@
+.resolution-summary-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.card {
+  flex: 1 1 150px;
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.label {
+  margin-top: 4px;
+  color: #555;
+}
+
+.card.overdue {
+  border: 1px solid #dc3545;
+}
+
+.loading,
+.empty {
+  margin-top: 20px;
+  text-align: center;
+}

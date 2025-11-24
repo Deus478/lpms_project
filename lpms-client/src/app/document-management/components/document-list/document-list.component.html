@@ -1,0 +1,179 @@
+
+<div class="document-list-container">
+  <div class="header">
+    <h1>Document Management</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="viewArchive()">
+        📦 View Archive
+      </button>
+      <button class="btn btn-primary" (click)="uploadDocument()">
+        📤 Upload Document
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-container" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total Documents</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.draft }}</div>
+      <div class="stat-label">Drafts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.approved }}</div>
+      <div class="stat-label">Approved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.archived }}</div>
+      <div class="stat-label">Archived</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ formatFileSize(stats.totalSize) }}</div>
+      <div class="stat-label">Total Storage</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (input)="onSearch()"
+        placeholder="Search documents..."
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="categoryFilter">Category:</label>
+      <select 
+        id="categoryFilter"
+        [(ngModel)]="selectedCategory" 
+        (change)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="ALL">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">
+          {{ category.replace('_', ' ') }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="statusFilter">Status:</label>
+      <select 
+        id="statusFilter"
+        [(ngModel)]="selectedStatus" 
+        (change)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="ALL">All Statuses</option>
+        <option *ngFor="let status of statuses" [value]="status">
+          {{ status.replace('_', ' ') }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="accessFilter">Access Level:</label>
+      <select 
+        id="accessFilter"
+        [(ngModel)]="selectedAccessLevel" 
+        (change)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="ALL">All Access Levels</option>
+        <option *ngFor="let level of accessLevels" [value]="level">
+          {{ level }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading documents...
+  </div>
+
+  <!-- Documents Table -->
+  <div class="documents-table" *ngIf="!isLoading && filteredDocuments.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Document Name</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Access Level</th>
+          <th>Size</th>
+          <th>Uploaded By</th>
+          <th>Uploaded At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let doc of filteredDocuments">
+          <td>
+            <div class="document-name" (click)="viewDocument(doc.id)">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="original-name">{{ doc.originalName }}</div>
+                <div class="document-description" *ngIf="doc.description">
+                  {{ doc.description }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+           <span class="badge" [ngClass]="getCategoryClass(doc.category || DocumentCategory.OTHER)">
+  {{ doc.category ? doc.category.replace('_', ' ') : 'Uncategorized' }}
+</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(doc.status)">
+              {{ doc.status.replace('_', ' ') }}
+            </span>
+          </td>
+          <td>
+           <span class="badge" [ngClass]="getAccessLevelClass(doc.accessLevel)"
+>
+  {{ doc.accessLevel }}
+</span>
+              <span *ngIf="doc.isEncrypted">🔒 </span>{{ doc.accessLevel }}
+        
+          </td>
+          <td>{{ formatFileSize(doc.fileSize) }}</td>
+          <td>{{ doc.uploadedBy }}</td>
+          <td>{{ formatDate(doc.uploadedAt) }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" (click)="viewDocument(doc.id)" title="View">
+                👁️
+              </button>
+              <button class="btn-icon" (click)="downloadDocument(doc)" title="Download">
+                ⬇️
+              </button>
+              <button 
+                class="btn-icon" 
+                (click)="archiveDocument(doc.id)" 
+                title="Archive"
+                *ngIf="doc.status !== 'ARCHIVED'"
+              >
+                📦
+              </button>
+              <button class="btn-icon danger" (click)="deleteDocument(doc.id)" title="Delete">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="no-results" *ngIf="!isLoading && filteredDocuments.length === 0">
+    <p>No documents found.</p>
+  </div>
+</div>

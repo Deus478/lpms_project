@@ -1,0 +1,77 @@
+<div class="meeting-list-container">
+  <div class="header">
+    <h1>Meeting Management</h1>
+    <div class="header-actions">
+      <button class="btn" (click)="viewResolutionSummary()">Resolution Summary</button>
+      <button class="btn btn-primary" (click)="createMeeting()">Schedule Meeting</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Search by title or location"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="statusFilter">Status:</label>
+      <select
+        id="statusFilter"
+        [(ngModel)]="selectedStatus"
+        (change)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="ALL">All Statuses</option>
+        <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading meetings...
+  </div>
+
+  <div class="meetings-table" *ngIf="!isLoading && filteredMeetings.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Scheduled Date</th>
+          <th>Status</th>
+          <th>Location</th>
+          <th>Board</th>
+          <th>Committee</th>
+          <th>Attendance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let meeting of filteredMeetings">
+          <td>
+            <button class="link-button" (click)="viewMeeting(meeting)">
+              {{ meeting.title || ('Meeting ' + meeting.meetingId) }}
+            </button>
+          </td>
+          <td>{{ formatDate(meeting.scheduledDate) }}</td>
+          <td>{{ meeting.status }}</td>
+          <td>{{ meeting.location }}</td>
+          <td>{{ meeting.boardId || '-' }}</td>
+          <td>{{ meeting.committeeId || '-' }}</td>
+          <td>{{ meeting.attendanceCount }}</td>
+          <td>
+            <button class="btn-small" (click)="editMeeting(meeting)">Edit</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="no-results" *ngIf="!isLoading && filteredMeetings.length === 0">
+    <p>No meetings found.</p>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+
+<div class="upload-container">
+  <div class="header">
+    <h1>Upload Document</h1>
+  </div>
+
+  <div class="upload-form">
+    <!-- File Drop Zone -->
+    <div 
+      class="drop-zone"
+      [class.drag-over]="dragOver"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      *ngIf="!selectedFile"
+    >
+      <div class="drop-zone-content">
+        <div class="upload-icon">📤</div>
+        <h3>Drag and drop your file here</h3>
+        <p>or</p>
+        <label for="fileInput" class="btn btn-primary">
+          Browse Files
+        </label>
+        <input 
+          type="file" 
+          id="fileInput" 
+          (change)="onFileSelected($event)"
+          style="display: none;"
+        />
+        <p class="file-info">
+          Supported formats: PDF, Word, Excel, Images<br>
+          Maximum file size: {{ formatFileSize(maxFileSize) }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Selected File Display -->
+    <div class="selected-file" *ngIf="selectedFile && !isUploading">
+      <div class="file-preview">
+        <span class="file-icon">{{ getFileIcon(selectedFile) }}</span>
+        <div class="file-details">
+          <div class="file-name">{{ selectedFile.name }}</div>
+          <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
+        </div>
+        <button class="btn-remove" (click)="removeFile()">✕</button>
+      </div>
+
+      <!-- Document Details Form -->
+      <div class="form-section">
+        <h3>Document Details</h3>
+
+        <div class="form-group">
+          <label for="category">Category <span class="required">*</span></label>
+          <select id="category" [(ngModel)]="category" class="form-control">
+            <option *ngFor="let cat of categories" [value]="cat">
+              {{ cat.replace('_', ' ') }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="accessLevel">Access Level <span class="required">*</span></label>
+          <select id="accessLevel" [(ngModel)]="accessLevel" class="form-control">
+            <option *ngFor="let level of accessLevels" [value]="level">
+              {{ level }}
+            </option>
+          </select>
+          <small class="helper-text">
+           <span *ngIf="accessLevel === AccessLevel.CONFIDENTIAL || accessLevel === AccessLevel.RESTRICTED">
+              🔒 This document will be encrypted
+            </span>
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="caseId">Case ID (Optional)</label>
+          <input 
+            type="text" 
+            id="caseId" 
+            [(ngModel)]="caseId"
+            class="form-control"
+            placeholder="Enter case ID if applicable"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description (Optional)</label>
+          <textarea 
+            id="description" 
+            [(ngModel)]="description"
+            class="form-control"
+            rows="3"
+            placeholder="Enter document description"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="tags">Tags (Optional)</label>
+          <input 
+            type="text" 
+            id="tags" 
+            [(ngModel)]="tags"
+            class="form-control"
+            placeholder="Enter tags separated by commas (e.g., contract, 2024, important)"
+          />
+          <small class="helper-text">Separate multiple tags with commas</small>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button class="btn btn-secondary" (click)="cancel()">
+          Cancel
+        </button>
+        <button class="btn btn-primary" (click)="uploadDocument()">
+          Upload Document
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Progress -->
+    <div class="upload-progress" *ngIf="isUploading">
+      <div class="progress-content">
+        <div class="progress-icon">⏳</div>
+        <h3>Uploading Document...</h3>
+        <div class="progress-bar-container">
+          <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+        </div>
+        <p>{{ uploadProgress }}%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Notice -->
+  <div class="security-notice">
+    <h4>🔒 Security & Encryption</h4>
+    <ul>
+      <li>All uploaded documents are securely stored</li>
+      <li>Confidential and Restricted documents are automatically encrypted</li>
+      <li>Access controls are enforced based on document permissions</li>
+      <li>All uploads are logged with checksums for integrity verification</li>
+    </ul>
+  </div>
+</div>

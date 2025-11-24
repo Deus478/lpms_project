@@ -1,0 +1,34 @@
+<div class="resolution-summary-container">
+  <h1>Resolution Summary</h1>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading summary...
+  </div>
+
+  <div *ngIf="summary && !isLoading" class="cards">
+    <div class="card">
+      <div class="value">{{ summary.total }}</div>
+      <div class="label">Total Resolutions</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.pending }}</div>
+      <div class="label">Pending</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.inProgress }}</div>
+      <div class="label">In Progress</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.completed }}</div>
+      <div class="label">Completed</div>
+    </div>
+    <div class="card overdue">
+      <div class="value">{{ summary.overdue }}</div>
+      <div class="label">Overdue</div>
+    </div>
+  </div>
+
+  <div *ngIf="!summary && !isLoading" class="empty">
+    No resolution data available.
+  </div>
+</div>

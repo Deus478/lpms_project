@@ -1,0 +1,296 @@
+
+.upload-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.upload-form {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.drop-zone {
+  border: 3px dashed #ccc;
+  border-radius: 8px;
+  padding: 60px 20px;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.drop-zone.drag-over {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.drop-zone-content {
+  pointer-events: none;
+}
+
+.upload-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.drop-zone h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.drop-zone p {
+  color: #666;
+  margin: 10px 0;
+}
+
+.file-info {
+  font-size: 13px;
+  color: #999;
+  margin-top: 20px;
+}
+
+.selected-file {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.file-icon {
+  font-size: 48px;
+}
+
+.file-details {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.file-size {
+  color: #666;
+  font-size: 14px;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.btn-remove:hover {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.form-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #dc3545;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+textarea.form-control {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.helper-text {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.upload-progress {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.progress-content {
+  animation: fadeIn 0.3s;
+}
+
+.progress-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.progress-content h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #007bff;
+  transition: width 0.3s;
+  border-radius: 4px;
+}
+
+.progress-content p {
+  font-size: 18px;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.security-notice {
+  background-color: #e8f4f8;
+  border-left: 4px solid #007bff;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.security-notice h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.security-notice ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.security-notice li {
+  color: #666;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 10px;
+  }
+
+  .upload-form {
+    padding: 20px;
+  }
+
+  .drop-zone {
+    padding: 40px 15px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

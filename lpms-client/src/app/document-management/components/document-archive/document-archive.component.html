@@ -1,0 +1,106 @@
+
+<div class="archive-container">
+  <div class="header">
+    <div class="title-section">
+      <button class="btn btn-secondary" (click)="goBack()">
+        ← Back to Documents
+      </button>
+      <h1>📦 Document Archive</h1>
+    </div>
+  </div>
+
+  <div class="archive-info">
+    <p>
+      <strong>Archive Information:</strong> Archived documents are stored securely and can be restored at any time. 
+      Permanently deleted documents cannot be recovered.
+    </p>
+  </div>
+
+  <div class="search-section">
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm" 
+      (input)="onSearch()"
+      placeholder="Search archived documents..."
+      class="search-input"
+    />
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Loading archived documents...
+  </div>
+
+  <div class="archived-documents" *ngIf="!isLoading && filteredDocuments.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Document Name</th>
+          <th>Category</th>
+          <th>Size</th>
+          <th>Archived By</th>
+          <th>Archived At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let doc of filteredDocuments">
+          <td>
+            <div class="document-name">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="original-name">{{ doc.originalName }}</div>
+                <div class="document-description" *ngIf="doc.description">
+                  {{ doc.description }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+          
+<!-- NEW -->
+<span class="badge" [ngClass]="getCategoryClass(doc.category || DocumentCategory.OTHER)">
+  {{ doc.category ? doc.category.replace('_', ' ') : 'Uncategorized' }}
+</span>
+            
+          </td>
+          <td>{{ formatFileSize(doc.fileSize) }}</td>
+          <td>{{ doc.archivedBy || 'N/A' }}</td>
+          <td>{{ doc.archivedAt ? formatDate(doc.archivedAt) : 'N/A' }}</td>
+          <td>
+            <div class="action-buttons">
+              <button 
+                class="btn-icon" 
+                (click)="downloadDocument(doc)" 
+                title="Download"
+              >
+                ⬇️
+              </button>
+              <button 
+                class="btn-icon restore" 
+                (click)="restoreDocument(doc.id)" 
+                title="Restore"
+              >
+                ↩️
+              </button>
+              <button 
+                class="btn-icon danger" 
+                (click)="permanentDelete(doc.id)" 
+                title="Permanent Delete"
+              >
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="no-results" *ngIf="!isLoading && filteredDocuments.length === 0">
+    <div class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h2>No Archived Documents</h2>
+      <p>There are no documents in the archive.</p>
+    </div>
+  </div>
+</div>
