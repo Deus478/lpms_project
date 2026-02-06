@@ -23,7 +23,7 @@ import { CommonModule } from '@angular/common';
       </main>
 
       <footer class="app-footer">
-        <p>&copy; 2024 LPMS. All rights reserved.</p>
+        <p>&copy; 2026 LPMS. All rights reserved.</p>
       </footer>
     </div>
   `,
@@ -35,7 +35,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .app-header {
-      background-color: #007bff;
+      background-color: var(--header-bg);
       color: white;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -79,12 +79,12 @@ import { CommonModule } from '@angular/common';
 
     .app-main {
       flex: 1;
-      background-color: #f5f5f5;
+      background-color: var(--primary-bg);
       padding: 0;
     }
 
     .app-footer {
-      background-color: #333;
+      background-color: var(--footer-bg);
       color: white;
       text-align: center;
       padding: 20px;
@@ -98,5 +98,6 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class App {
-  title = 'LPMS Client';
+  title = 'LEGAL PRACTICE MANAGEMENT SYSTEM';
 }
+

@@ -8,7 +8,108 @@ import { CommonModule } from '@angular/common';
 @Component({
     standalone:true,
   selector: 'app-case-list',
-  templateUrl: './case-list.component.html',
+  template: `
+    <div class="case-list-container">
+      <div class="header">
+        <h1>Case Management</h1>
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="createNewCase()">Create Case</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Search by title or description"
+            class="search-input"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="statusFilter">Status:</label>
+          <select
+            id="statusFilter"
+            [(ngModel)]="selectedStatus"
+            (change)="onStatusFilterChange()"
+            class="filter-select"
+          >
+            <option value="ALL">All Statuses</option>
+            <option *ngFor="let s of caseStatuses" [value]="s">{{ s.replace('_',' ') }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="priorityFilter">Priority:</label>
+          <select
+            id="priorityFilter"
+            [(ngModel)]="selectedPriority"
+            (change)="onPriorityFilterChange()"
+            class="filter-select"
+          >
+            <option value="ALL">All Priorities</option>
+            <option *ngFor="let p of casePriorities" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="loading" *ngIf="isLoading">
+        Loading cases...
+      </div>
+
+      <div class="cases-table" *ngIf="!isLoading && pagedCases.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Case #</th>
+              <th>Lawyer</th>
+              <th>Court</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Filed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of pagedCases">
+              <td>
+                <button class="link-button" (click)="viewCase(c.id)">{{ c.title || ('Case ' + c.caseNumber) }}</button>
+              </td>
+              <td>{{ c.caseNumber }}</td>
+              <td>{{ c.lawyerName || '-' }}</td>
+              <td>{{ c.courtName || '-' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(c.status)">{{ c.status.replace('_',' ') }}</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getPriorityClass(c.priority)">{{ c.priority }}</span>
+              </td>
+              <td>{{ c.dateFiled | date:'shortDate' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-small" (click)="editCase(c.id)">Edit</button>
+                  <button class="btn-small danger" (click)="deleteCase(c.id)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <button class="btn-small" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">Prev</button>
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+          <button class="btn-small" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">Next</button>
+        </div>
+      </div>
+
+      <div class="no-results" *ngIf="!isLoading && pagedCases.length === 0">
+        <p>No cases found.</p>
+      </div>
+    </div>
+  `,
   styleUrls: ['./case-list.component.css'],
   imports:[CommonModule, FormsModule]
 })

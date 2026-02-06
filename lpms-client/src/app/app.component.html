@@ -1,9 +1,18 @@
+
 <div class="app-container">
   <header class="app-header">
     <div class="header-content">
-      <h1 class="app-title">{{ title }}</h1>
+      <div class="brand">
+        <div class="brand-logo-box">
+          <img src="/assets/zigama-logo.png" alt="Zigama CSS" class="brand-logo" />
+        </div>
+        <div class="brand-text">
+          <h1 class="app-title">{{ title }}</h1>
+        </div>
+      </div>
 
       <nav class="app-nav">
+        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
         <a routerLink="/case-management" routerLinkActive="active">Case Management</a>
         <a routerLink="/document-management" routerLinkActive="active">Document Management</a>
         <a routerLink="/meetings" routerLinkActive="active">Meeting Management</a>
@@ -16,6 +25,6 @@
   </main>
 
   <footer class="app-footer">
-    <p>&copy; 2024 LPMS. All rights reserved.</p>
+    <p>&copy; 2026 LPMS. All rights reserved.</p>
   </footer>
 </div>

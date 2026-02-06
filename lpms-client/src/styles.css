@@ -1,6 +1,16 @@
-
 * {
   box-sizing: border-box;
+}
+
+:root {
+  /* Zigama CSS brand */
+  --primary: #1E8750;       /* Zigama green */
+  --primary-hover: #176C46; /* darker hover */
+  --primary-bg: #F3F8F2;    /* very light green for page background */
+  --header-bg: #1E8750;     /* header green */
+  --footer-bg: #1E8750;     /* darker footer */
+  --accent: #C9A227;        /* gold accent */
+  --accent-hover: #B08E1F;
 }
 
 body {
@@ -50,4 +60,130 @@ button {
 .p-1 { padding: 0.5rem; }
 .p-2 { padding: 1rem; }
 .p-3 { padding: 1.5rem; }
-.p-4 { padding: 2rem; }
+.p-4 { padding: 2rem; }/* Data tables - global */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+th, td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+thead th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+td.wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* Minute doc editor */
+.doc-editor {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.doc-editor .doc-input {
+  width: 240px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+}
+.doc-editor .doc-input:focus {
+  border-color: var(--primary, #1E8750);
+  box-shadow: 0 0 0 2px rgba(30, 135, 80, 0.15);
+}
+.doc-editor .btn {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.doc-editor .btn:hover {
+  background: #f3f4f6;
+}
+.doc-editor .btn-primary {
+  border-color: var(--primary, #1E8750);
+  background: var(--primary, #1E8750);
+  color: #fff;
+}
+.doc-editor .btn-primary:hover {
+  background: var(--primary-hover, #176C46);
+}
+.doc-current {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+}
+.doc-chip {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #e0e7ff;
+  border-radius: 9999px;
+  padding: 2px 8px;
+}
+/* Document picker */
+.doc-picker {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: 420px;
+  max-height: 320px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+}
+.doc-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid #eef2f7;
+}
+.doc-picker-header input[type="text"] {
+  flex: 1 1 auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 8px;
+  outline: none;
+}
+.doc-list {
+  overflow-y: auto;
+  max-height: 210px;
+}
+.doc-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+}
+.doc-item:hover { background: #f8fafc; }
+.doc-item.selected { background: #e6fffa; outline: 2px solid #22c55e22; }
+.doc-item-name { font-weight: 600; color: #1f2937; }
+.doc-item-meta { font-size: 12px; color: #6b7280; }
+.doc-picker-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px; border-top: 1px solid #eef2f7; }
+.doc-loading, .doc-empty { padding: 12px; text-align: center; color: #6b7280; }

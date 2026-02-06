@@ -84,9 +84,10 @@ export class MeetingDetailComponent implements OnInit {
     if (!this.meeting || !this.newMinuteContent.trim()) {
       return;
     }
+    const trimmedId = (this.newMinuteDocumentId || '').trim();
     const dto: CreateMinuteDto = {
       content: this.newMinuteContent.trim(),
-      documentId: this.newMinuteDocumentId ? this.newMinuteDocumentId : undefined
+      documentId: trimmedId && this.isGuid(trimmedId) ? trimmedId : undefined
     };
     this.meetingService.addMinute(this.meeting.meetingId, dto).subscribe({
       next: minute => {
@@ -126,7 +127,7 @@ export class MeetingDetailComponent implements OnInit {
     }
     const dto = {
       status,
-      completedAt: status === 'Completed' ? new Date().toISOString() : undefined
+      completedAt: status === 'Completed' ? new Date().toISOString() : null
     };
     this.meetingService.updateResolutionStatus(this.meeting.meetingId, resolution.resolutionId, dto).subscribe({
       next: () => {
@@ -190,10 +191,20 @@ export class MeetingDetailComponent implements OnInit {
     });
   }
 
-  formatDate(value: string | undefined): string {
+  formatDate(value: string | null | undefined): string {
     if (!value) {
       return '';
     }
     return this.meetingService.formatDate(value);
+  }
+
+  displayResolutionStatus(status: string | null | undefined): string {
+    if (!status) return '';
+    if (status === 'InProgress') return 'In Progress';
+    return status;
+  }
+
+  private isGuid(str: string): boolean {
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(str);
   }
 }

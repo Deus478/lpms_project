@@ -268,6 +268,10 @@ export class CaseDetailsComponent implements OnInit {
     return classes[normalized] || '';
   }
 
+  getDisplayStatus(): string {
+    return this.case?.status || '';
+  }
+
   isDueSoon(): boolean {
     if (!this.case?.endDate) return false;
     const dueDate = new Date(this.case.endDate);

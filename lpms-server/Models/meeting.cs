@@ -19,6 +19,12 @@ namespace LegalCaseManagement.Models
         [Required]
         public DateTime ScheduledDate { get; set; }
 
+        public DateTime? EndTime { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string MeetingType { get; set; } = "Board"; // Board, BoardCommittee, ExecutiveManagement, LegalReview, AdHoc
+
         [MaxLength(200)]
         public string? Location { get; set; }
 
@@ -29,7 +35,13 @@ namespace LegalCaseManagement.Models
         public string? Agenda { get; set; }
 
         [MaxLength(50)]
-        public string Status { get; set; } = "Scheduled";
+        public string Status { get; set; } = "Scheduled"; // Scheduled, InProgress, Completed, Cancelled
+
+        public int? ChairpersonUserId { get; set; }
+
+        public int? SecretaryUserId { get; set; }
+
+        public int? MinQuorum { get; set; } // Minimum number of participants required
 
         public Guid? SeriesId { get; set; }
         [MaxLength(50)]
@@ -51,6 +63,12 @@ namespace LegalCaseManagement.Models
         public virtual ICollection<MeetingAttendance> Attendances { get; set; } = new List<MeetingAttendance>();
         public virtual ICollection<Minute> Minutes { get; set; } = new List<Minute>();
         public virtual ICollection<Resolution> Resolutions { get; set; } = new List<Resolution>();
+
+        [ForeignKey("ChairpersonUserId")]
+        public virtual User? ChairpersonUser { get; set; }
+
+        [ForeignKey("SecretaryUserId")]
+        public virtual User? SecretaryUser { get; set; }
     }
 }
 

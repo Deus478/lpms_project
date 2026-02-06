@@ -44,6 +44,17 @@
             <span *ngIf="document.isEncrypted">🔒 </span>{{ document.accessLevel }}
          
         </div>
+
+        <!-- Manual Status Control -->
+        <div class="status-editor">
+          <label for="statusSelect">Set Status:</label>
+          <select id="statusSelect" [(ngModel)]="selectedStatus">
+            <option *ngFor="let s of statusOptions" [ngValue]="s">{{ s.replace('_',' ') }}</option>
+          </select>
+          <button class="btn btn-primary" (click)="updateStatus()" [disabled]="isSavingStatus || !selectedStatus || selectedStatus === document.status">
+            {{ isSavingStatus ? 'Saving...' : 'Save Status' }}
+          </button>
+        </div>
       </div>
     </div>
 

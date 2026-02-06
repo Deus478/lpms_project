@@ -1,0 +1,107 @@
+<div class="workflow-tracker bg-white rounded-lg shadow-md p-6">
+  <h3 class="text-lg font-semibold mb-4">Case Workflow Progress</h3>
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex items-center justify-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <span class="ml-2 text-gray-600">Loading workflow...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+    {{ error }}
+  </div>
+
+  <!-- Workflow Steps -->
+  <div *ngIf="!loading && !error && workflowSteps.length > 0" class="space-y-4">
+    <div class="relative">
+      <!-- Progress Line -->
+      <div class="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-300"></div>
+      
+      <!-- Steps -->
+      <div class="space-y-6">
+        <div 
+          *ngFor="let step of workflowSteps; let i = index" 
+          class="relative flex items-start"
+          [class.opacity-50]="isStepRejected(step)"
+        >
+          <!-- Step Indicator -->
+          <div 
+            class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold z-10"
+            [class]="getStatusClass(step.status)"
+          >
+            {{ getStatusIcon(step.status) }}
+          </div>
+
+          <!-- Step Content -->
+          <div class="ml-4 flex-1">
+            <div class="bg-white border rounded-lg p-4" 
+                 [class.border-blue-300]="isStepActive(step, i)"
+                 [class.bg-blue-50]="isStepActive(step, i)">
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-gray-900">{{ step.stepName }}</h4>
+                <span class="px-2 py-1 text-xs font-medium rounded-full" 
+                      [class]="getStatusClass(step.status)">
+                  {{ step.status }}
+                </span>
+              </div>
+
+              <p class="text-sm text-gray-600 mb-2">
+                <strong>Approver Role:</strong> {{ step.approverRole }}
+              </p>
+
+              <p class="text-sm text-gray-600 mb-2">
+                <strong>Assigned to:</strong> 
+                <span *ngIf="step.assignedUser">
+                  {{ step.assignedUser.fullName }}
+                </span>
+                <span *ngIf="!step.assignedUser" class="text-gray-500">
+                  Not assigned
+                </span>
+              </p>
+
+              <!-- Due Date -->
+              <div *ngIf="step.dueDate" class="text-sm text-gray-600 mb-2">
+                <strong>Due Date:</strong> 
+                <span [class.text-red-600]="isStepOverdue(step)">
+                  {{ step.dueDate | date:'medium' }}
+                </span>
+                <span *ngIf="isStepOverdue(step)" 
+                      class="ml-2 text-red-600 font-medium">
+                  (Overdue)
+                </span>
+              </div>
+
+              <!-- Comments -->
+              <div *ngIf="step.comments" class="mt-3 p-3 bg-gray-50 rounded text-sm">
+                <p class="font-medium text-gray-700 mb-1">Comments:</p>
+                <p class="text-gray-600">{{ step.comments }}</p>
+              </div>
+
+              <!-- Legal Opinion -->
+              <div *ngIf="step.legalOpinion" class="mt-3 p-3 bg-blue-50 rounded text-sm">
+                <p class="font-medium text-blue-700 mb-1">Legal Opinion:</p>
+                <p class="text-blue-600">{{ step.legalOpinion }}</p>
+              </div>
+
+              <!-- Timestamps -->
+              <div class="mt-3 text-xs text-gray-500 space-y-1">
+                <div *ngIf="step.startedAt">
+                  Started: {{ step.startedAt | date:'short' }}
+                </div>
+                <div *ngIf="step.completedAt">
+                  Completed: {{ step.completedAt | date:'short' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Workflow -->
+  <div *ngIf="!loading && !error && workflowSteps.length === 0" class="text-center py-8 text-gray-500">
+    <p>No workflow has been started for this case.</p>
+  </div>
+</div>

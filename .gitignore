@@ -360,4 +360,7 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsd
+FodyWeavers.xsdlpms-client/dist/
+lpms-client/.angular/
+lpms-server/Documents/
+lpms-server/Documents/Archive/

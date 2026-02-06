@@ -137,12 +137,10 @@
             </span>
           </td>
           <td>
-           <span class="badge" [ngClass]="getAccessLevelClass(doc.accessLevel)"
->
+           <span class="badge" [ngClass]="getAccessLevelClass(doc.accessLevel)">
   {{ doc.accessLevel }}
 </span>
-              <span *ngIf="doc.isEncrypted">🔒 </span>{{ doc.accessLevel }}
-        
+              <span *ngIf="doc.isEncrypted">🔒</span>
           </td>
           <td>{{ formatFileSize(doc.fileSize) }}</td>
           <td>{{ doc.uploadedBy }}</td>

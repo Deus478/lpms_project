@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Case, CreateCaseDto, UpdateCaseDto, CaseStatus, CasePriority } from '../models/case.model';
 import { CaseSummaryDto, CaseDetailDto, CreateCaseApiDto, HearingDto, DeadlineDto, CreateHearingApiDto, CreateDeadlineApiDto, UpdateHearingApiDto, UpdateDeadlineApiDto } from '../models/case-api.model';
+import { CaseWorkflow } from '../models/workflow.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -97,7 +98,20 @@ export class CaseService {
   }
 
   createCase(apiDto: CreateCaseApiDto): Observable<Case> {
-    return this.http.post<CaseDetailDto>(this.baseUrl, apiDto).pipe(
+    // Ensure status/priority are in server-friendly labels if provided
+    const payload: any = { ...apiDto };
+    if (payload.status) {
+      const s = String(payload.status);
+      const enumMatch = Object.values(CaseStatus).find(v => v === s as any);
+      payload.status = enumMatch ? this.mapCaseStatusToApi(enumMatch as CaseStatus) : payload.status;
+    }
+    if (payload.priority) {
+      const p = String(payload.priority);
+      const enumMatch = Object.values(CasePriority).find(v => v === p as any);
+      payload.priority = enumMatch ? this.mapPriorityToApi(enumMatch as CasePriority) : payload.priority;
+    }
+
+    return this.http.post<CaseDetailDto>(this.baseUrl, payload).pipe(
       map(dto => this.mapDetailDtoToCase(dto)),
       catchError(err => throwError(() => err))
     );
@@ -159,6 +173,7 @@ export class CaseService {
 
   private mapSummaryDtoToCase(dto: CaseSummaryDto): Case {
     const createdAt = new Date(dto.dateFiled);
+    const dueDate = undefined; // Summary DTO doesn't have due date
     return {
       id: dto.caseId.toString(),
       caseNumber: dto.caseNumber,
@@ -185,6 +200,7 @@ export class CaseService {
     const lawyerName = dto.assignedLawyer?.fullName || '';
     const dateFiled = new Date(dto.dateFiled);
     const courtName = dto.court?.name ?? '';
+    const dueDate = dto.endDate ? new Date(dto.endDate) : undefined;
     return {
       id: dto.caseId.toString(),
       caseNumber: dto.caseNumber,
@@ -199,14 +215,14 @@ export class CaseService {
       createdBy: lawyerName,
       createdAt,
       updatedAt,
-      dueDate: dto.endDate ? new Date(dto.endDate) : undefined,
+      dueDate,
       tags: [],
       notes: dto.outcome ?? undefined
     } as Case;
   }
 
   private mapStatus(status: string): CaseStatus {
-    const normalized = status.toLowerCase();
+    const normalized = (status || '').toLowerCase();
     if (normalized.includes('pending')) return CaseStatus.PENDING;
     if (normalized.includes('progress')) return CaseStatus.IN_PROGRESS;
     if (normalized.includes('closed') || normalized.includes('complete')) return CaseStatus.CLOSED;
@@ -242,6 +258,10 @@ export class CaseService {
     if (dto.notes !== undefined) {
       apiDto.outcome = dto.notes;
     }
+    if ((dto as any).priority !== undefined) {
+      // Map priority back to server label if provided
+      apiDto.priority = this.mapPriorityToApi((dto as any).priority as CasePriority);
+    }
 
     return apiDto;
   }
@@ -259,5 +279,25 @@ export class CaseService {
       default:
         return 'Open';
     }
+  }
+
+  private mapPriorityToApi(priority: CasePriority): string {
+    switch (priority) {
+      case CasePriority.LOW:
+        return 'Low';
+      case CasePriority.HIGH:
+        return 'High';
+      case CasePriority.CRITICAL:
+        return 'Critical';
+      default:
+        return 'Medium';
+    }
+  }
+
+  // Workflow methods
+  getCaseWorkflow(caseId: number): Observable<CaseWorkflow> {
+    return this.http.get<CaseWorkflow>(`${this.baseUrl}/${caseId}/workflow`).pipe(
+      catchError(err => throwError(() => err))
+    );
   }
 }

@@ -58,7 +58,7 @@ namespace LegalCaseManagement.Controllers
                 Description = r.Description,
                 Status = r.Status,
                 DueDate = r.DueDate,
-                ResponsibleParty = r.ResponsibleParty,
+                ResponsibleUserId = r.ResponsibleUserId,
                 CreatedAt = r.CreatedAt,
                 CompletedAt = r.CompletedAt
             }).ToList();

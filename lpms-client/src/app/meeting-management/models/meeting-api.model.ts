@@ -39,6 +39,10 @@ export interface MinuteDto {
   documentId?: string | null;
 }
 
+export interface UpdateMinuteDocumentDto {
+  documentId?: string | null;
+}
+
 export interface CreateResolutionDto {
   title: string;
   description?: string | null;

@@ -94,25 +94,26 @@ DocumentCategory = DocumentCategory;
     this.router.navigate(['/document-management']);
   }
 
-getCategoryClass(category: DocumentCategory | undefined): string {
-  if (!category) return 'category-other';
-  
-  const classes: { [key in DocumentCategory]: string } = {
-    [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
-    [DocumentCategory.CONTRACT]: 'category-contract',
-    [DocumentCategory.COURT_FILING]: 'category-court-filing',
-    [DocumentCategory.EVIDENCE]: 'category-evidence',
-    [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
-    [DocumentCategory.PLEADING]: 'category-pleading',
-    [DocumentCategory.MEMO]: 'category-memo',
-    [DocumentCategory.AGREEMENT]: 'category-agreement',
-    [DocumentCategory.COURT_ORDER]: 'category-court-order',
-    [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
-    [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
-    [DocumentCategory.OTHER]: 'category-other'
-  };
-  return classes[category] || 'category-other';
-}
+  getCategoryClass(category: DocumentCategory | undefined): string {
+    if (!category) return 'category-other';
+
+    const classes: Partial<Record<DocumentCategory, string>> = {
+      [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
+      [DocumentCategory.CONTRACT]: 'category-contract',
+      [DocumentCategory.COURT_FILING]: 'category-court-filing',
+      [DocumentCategory.EVIDENCE]: 'category-evidence',
+      [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
+      [DocumentCategory.PLEADING]: 'category-pleading',
+      [DocumentCategory.MEMO]: 'category-memo',
+      [DocumentCategory.AGREEMENT]: 'category-agreement',
+      [DocumentCategory.COURT_ORDER]: 'category-court-order',
+      [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
+      [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
+      [DocumentCategory.OTHER]: 'category-other'
+    };
+
+    return classes[category] || 'category-other';
+  }
 
   formatFileSize(bytes: number): string {
     return this.documentService.formatFileSize(bytes);

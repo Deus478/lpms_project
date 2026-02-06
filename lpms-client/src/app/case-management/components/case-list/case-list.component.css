@@ -70,12 +70,12 @@
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {
@@ -131,7 +131,7 @@
 
 .case-title {
   margin: 0;
-  color: #007bff;
+  color: var(--primary);
   cursor: pointer;
   font-size: 18px;
 }

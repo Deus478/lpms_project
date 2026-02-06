@@ -43,5 +43,6 @@ namespace LegalCaseManagement.Models
         // Navigation Properties
         public virtual ICollection<Case> Cases { get; set; } = new List<Case>();
         public virtual ICollection<Hearing> Hearings { get; set; } = new List<Hearing>();
+        public virtual ICollection<Judge> Judges { get; set; } = new List<Judge>();
     }
 }

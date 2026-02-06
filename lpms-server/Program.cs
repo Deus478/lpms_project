@@ -6,11 +6,21 @@ using LegalCaseManagement.Mapping;
 using System.Reflection;
 using Swashbuckle.AspNetCore.Filters;
 using DocumentManagement.Services;
+using LegalCaseManagement.Infrastructure.Auth;
+using LegalCaseManagement.Infrastructure.Audit;
+using LegalCaseManagement.Infrastructure.Bootstrap;
+using LegalCaseManagement.Infrastructure.Notifications;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AuditActionFilter>();
+});
 
 // Add DbContext (single registration)
 builder.Services.AddDbContext<LegalCaseDbContext>(options =>
@@ -18,6 +28,37 @@ builder.Services.AddDbContext<LegalCaseDbContext>(options =>
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+// Configure authentication/authorization (JWT)
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection("Auth"));
+builder.Services.AddSingleton<ITokenService, TokenService>();
+builder.Services.AddScoped<AuditActionFilter>();
+
+var jwtKey = builder.Configuration["Auth:JwtKey"];
+var issuer = builder.Configuration["Auth:Issuer"];
+var audience = builder.Configuration["Auth:Audience"];
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = string.IsNullOrWhiteSpace(jwtKey)
+                ? new SymmetricSecurityKey(Encoding.UTF8.GetBytes("DEV_FALLBACK_KEY_CHANGE_ME"))
+                : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+            ValidIssuer = issuer,
+            ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+            ValidAudience = audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // Register document services
 builder.Services.AddScoped<IDocumentService, DocumentService>();
@@ -71,6 +112,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Background notification generation
+builder.Services.AddHostedService<NotificationSchedulerHostedService>();
+
 // Configure logging
 builder.Services.AddLogging(logging =>
 {
@@ -91,6 +135,9 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // Show detailed errors during development
+    app.UseDeveloperExceptionPage();
+
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -99,12 +146,16 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Enable CORS
-app.UseCors("AllowAll");
-
 // Configure middleware
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseRouting();
+// Enable CORS (must be between UseRouting and UseAuthorization when using endpoint routing)
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseMiddleware<DevBypassAuthMiddleware>();
 app.UseAuthorization();
 
 // Map controllers
@@ -114,17 +165,24 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<LegalCaseDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
-        // Apply any pending migrations (creates DB and tables if missing)
-        context.Database.Migrate();
-
-        // Seed initial data if tables are empty
-        await DataSeeder.SeedAsync(context);
+        var autoMigrate = builder.Configuration.GetValue<bool>("Database:AutoMigrate");
+        if (autoMigrate)
+        {
+            logger.LogInformation("Database AutoMigrate enabled; applying EF Core migrations...");
+            await context.Database.MigrateAsync();
+            await BootstrapSeeder.SeedAsync(context);
+            logger.LogInformation("Database migrations applied successfully.");
+        }
+        else
+        {
+            logger.LogInformation("Database AutoMigrate disabled; skipping EF Core migrations.");
+        }
     }
     catch (Exception ex)
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while creating the database");
     }
 }

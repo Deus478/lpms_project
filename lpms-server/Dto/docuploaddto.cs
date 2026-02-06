@@ -19,6 +19,9 @@ namespace DocumentManagement.DTOs
         [MaxLength(100)]
         public string ?DocumentType { get; set; }
         
+        [MaxLength(50)]
+        public string ?AccessLevel { get; set; }
+        
         [Required]
         public string ?UploadedBy { get; set; }
     }

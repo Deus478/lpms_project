@@ -1,11 +1,17 @@
 <div class="resolution-summary-container">
   <h1>Resolution Summary</h1>
 
+  <div *ngIf="toasts.length" style="position:sticky; top:0; z-index:10;">
+    <div *ngFor="let t of toasts" [ngStyle]="{ 'background': t.type==='success' ? '#d1fae5' : '#fee2e2', 'border': '1px solid ' + (t.type==='success' ? '#10b981' : '#ef4444'), 'padding': '8px 12px', 'margin': '8px 0', 'border-radius': '4px' }">
+      {{ t.text }}
+    </div>
+  </div>
+
   <div class="loading" *ngIf="isLoading">
     Loading summary...
   </div>
 
-  <div *ngIf="summary && !isLoading" class="cards">
+  <div *ngIf="summary && !isLoading && summary.total > 0" class="cards">
     <div class="card">
       <div class="value">{{ summary.total }}</div>
       <div class="label">Total Resolutions</div>
@@ -28,7 +34,136 @@
     </div>
   </div>
 
-  <div *ngIf="!summary && !isLoading" class="empty">
-    No resolution data available.
+  <div *ngIf="!isLoading && (!summary || summary.total === 0)" class="empty">
+    No resolutions found.
+  </div>
+
+  <h2 style="margin-top:24px">Meeting Resolutions and Minutes</h2>
+  <div class="meeting-loader" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
+    <label for="meetingId">Meeting ID</label>
+    <input id="meetingId" type="number" [(ngModel)]="selectedMeetingId" style="width:120px;" />
+    <button class="btn" (click)="loadForMeeting()">Load</button>
+  </div>
+
+  <div *ngIf="selectedMeetingId">
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <section style="flex:1 1 380px; min-width:320px;">
+        <h3>Resolutions for Meeting {{ selectedMeetingId }}</h3>
+        <div class="loading" *ngIf="isLoadingRes">Loading resolutions...</div>
+        <div *ngIf="!isLoadingRes && resolutions.length === 0" class="empty">No resolutions for this meeting.</div>
+        <table *ngIf="!isLoadingRes && resolutions.length > 0" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Due</th>
+              <th>Responsible</th>
+              <th>Created</th>
+              <th>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of resolutions">
+              <td>{{ r.title }}</td>
+              <td>{{ displayResolutionStatus(r.status) }}</td>
+              <td>{{ formatDate(r.dueDate) || '-' }}</td>
+              <td>{{ r.responsibleParty || '-' }}</td>
+              <td>{{ formatDate(r.createdAt) }}</td>
+              <td>{{ formatDate(r.completedAt) || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:12px;">
+          <h4>Add Resolution</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; max-width:480px;">
+            <input type="text" [(ngModel)]="newResTitle" placeholder="Title" />
+            <textarea [(ngModel)]="newResDescription" rows="2" placeholder="Description (optional)"></textarea>
+            <input type="date" [(ngModel)]="newResDueDate" />
+            <input type="text" [(ngModel)]="newResResponsibleParty" placeholder="Responsible party (optional)" />
+            <button class="btn btn-primary" (click)="addResolution()" [disabled]="isPostingRes || !newResTitle.trim()">
+              {{ isPostingRes ? 'Saving...' : 'Add Resolution' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section style="flex:1 1 380px; min-width:320px;">
+        <h3>Minutes for Meeting {{ selectedMeetingId }}</h3>
+        <div class="loading" *ngIf="isLoadingMin">Loading minutes...</div>
+        <div *ngIf="!isLoadingMin && minutes.length === 0" class="empty">No minutes for this meeting.</div>
+        <table *ngIf="!isLoadingMin && minutes.length > 0" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Recorded</th>
+              <th>Content</th>
+              <th>Document</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of minutes">
+              <td>{{ formatDate(m.recordedDate) }}</td>
+              <td class="wrap">{{ m.content }}</td>
+              <td>
+                <div class="doc-editor" style="position:relative">
+                  <input type="text" class="doc-input" [(ngModel)]="editMinuteDocs[m.minuteId]" (ngModelChange)="onMinuteDocInputChange(m, $event)" (keydown.enter)="saveMinuteDocument(m)" (blur)="autoSaveIfChanged(m)" placeholder="Paste Document GUID" [ngStyle]="minuteDocError[m.minuteId] ? {'border-color':'#dc3545'} : null" />
+                  <button class="btn btn-primary" (click)="saveMinuteDocument(m)" [disabled]="isMinuteUpdating(m.minuteId) || !!minuteDocError[m.minuteId] || !editMinuteDocs[m.minuteId]?.trim() || (editMinuteDocs[m.minuteId]?.trim() || '') === (m.documentId || '')">{{ isMinuteUpdating(m.minuteId) ? 'Saving...' : 'Save' }}</button>
+                  <button class="btn" (click)="clearMinuteDocument(m)" [disabled]="isMinuteUpdating(m.minuteId) || (!editMinuteDocs[m.minuteId] && !m.documentId)">Clear</button>
+                  <button class="btn" (click)="openPicker(m)" [disabled]="isLoadingDocs" style="margin-left:6px;">Pick</button>
+
+                  <div class="doc-picker" *ngIf="showPicker[m.minuteId]">
+                    <div class="doc-picker-header">
+                      <input type="text" [(ngModel)]="docSearch[m.minuteId]" placeholder="Search documents by name or ID" />
+                      <button class="btn" (click)="closePicker(m)">✕</button>
+                    </div>
+                    <div class="doc-list" *ngIf="!isLoadingDocs; else loadingDocs">
+                      <div class="doc-item" *ngFor="let d of getFilteredDocuments(m.minuteId) | slice:0:10" (click)="selectDoc(m, d.id)" (dblclick)="attachSelected(m)" [class.selected]="pickerSelection[m.minuteId] === d.id" [ngStyle]="pickerSelection[m.minuteId] === d.id ? {'background':'#e6fffa','outline':'2px solid #22c55e22'} : null">
+                        <input type="radio" [checked]="pickerSelection[m.minuteId] === d.id" (change)="selectDoc(m, d.id)" style="margin-right:8px" />
+                        <div>
+                          <div class="doc-item-name">{{ d.originalName }}</div>
+                          <div class="doc-item-meta">{{ d.id }}</div>
+                        </div>
+                      </div>
+                      <div class="doc-empty" *ngIf="getFilteredDocuments(m.minuteId).length === 0">No documents found</div>
+                    </div>
+                    <ng-template #loadingDocs>
+                      <div class="doc-loading">Loading documents...</div>
+                    </ng-template>
+                    <div class="doc-picker-actions">
+                      <button class="btn btn-primary" (click)="attachSelected(m)" [disabled]="!pickerSelection[m.minuteId]">Attach</button>
+                      <button class="btn" (click)="closePicker(m)">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="doc-current">
+                  <ng-container *ngIf="m.documentId; else noDoc">
+                    Current: <span class="doc-chip">{{ m.documentId }}</span>
+                    <a *ngIf="m.documentId" [routerLink]="['/document-management/view', m.documentId]" class="btn btn-sm btn-outline-primary ms-2">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                  <button *ngIf="m.documentId" (click)="confirmDeleteDocument(m)" class="btn btn-sm btn-outline-danger ms-2" [disabled]="isMinuteUpdating(m.minuteId)">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                  </ng-container>
+                  <ng-template #noDoc>Current: -</ng-template>
+                </div>
+                <div *ngIf="minuteDocError[m.minuteId]" style="color:#dc3545; font-size:12px; margin-top:4px;">{{ minuteDocError[m.minuteId] }}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:12px;">
+          <h4>Add Minute</h4>
+          <div style="display:flex; flex-direction:column; gap:8px; max-width:480px;">
+            <textarea [(ngModel)]="newMinuteContent" rows="3" placeholder="Minute content"></textarea>
+            <input type="text" [(ngModel)]="newMinuteDocumentId" placeholder="Linked Document ID (GUID, optional)" />
+            <button class="btn btn-primary" (click)="addMinute()" [disabled]="isPostingMin || !newMinuteContent.trim()">
+              {{ isPostingMin ? 'Saving...' : 'Add Minute' }}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 </div>

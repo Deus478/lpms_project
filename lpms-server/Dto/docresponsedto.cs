@@ -19,6 +19,7 @@ namespace DocumentManagement.DTOs
         public DateTime UploadedDate { get; set; }
         public bool IsArchived { get; set; }
         public string? DocumentType { get; set; }
+        public string? AccessLevel { get; set; }
    
     }
 }

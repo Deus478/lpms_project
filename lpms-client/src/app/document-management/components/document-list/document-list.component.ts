@@ -25,7 +25,6 @@ export class DocumentListComponent implements OnInit {
    DocumentCategory = DocumentCategory; // ✅ expose enum to template
   AccessLevel = AccessLevel;           // ✅ optional, but useful for template too
 
-  
   searchTerm = '';
   selectedCategory: DocumentCategory | 'ALL' = 'ALL';
   selectedStatus: DocumentStatus | 'ALL' = 'ALL';
@@ -51,7 +50,7 @@ export class DocumentListComponent implements OnInit {
     this.isLoading = true;
     this.documentService.getDocuments().subscribe({
       next: (docs) => {
-        this.documents = docs.filter(d => d.status !== DocumentStatus.DELETED);
+        this.documents = docs.filter(d => d.status !== DocumentStatus.DELETED && d.status !== DocumentStatus.ARCHIVED && !d.isArchived);
         this.filteredDocuments = this.documents;
         this.isLoading = false;
       },
@@ -160,25 +159,25 @@ export class DocumentListComponent implements OnInit {
     this.router.navigate(['/document-management/archive']);
   }
 
- getCategoryClass(category: DocumentCategory | undefined): string {
-  if (!category) return 'category-other';
-  
-  const classes: { [key in DocumentCategory]: string } = {
-    [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
-    [DocumentCategory.CONTRACT]: 'category-contract',
-    [DocumentCategory.COURT_FILING]: 'category-court-filing',
-    [DocumentCategory.EVIDENCE]: 'category-evidence',
-    [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
-    [DocumentCategory.PLEADING]: 'category-pleading',
-    [DocumentCategory.MEMO]: 'category-memo',
-    [DocumentCategory.AGREEMENT]: 'category-agreement',
-    [DocumentCategory.COURT_ORDER]: 'category-court-order',
-    [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
-    [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
-    [DocumentCategory.OTHER]: 'category-other'
-  };
-  return classes[category] || 'category-other';
-}
+  getCategoryClass(category: DocumentCategory | undefined): string {
+    if (!category) return 'category-other';
+
+    const classes: Partial<Record<DocumentCategory, string>> = {
+      [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
+      [DocumentCategory.CONTRACT]: 'category-contract',
+      [DocumentCategory.COURT_FILING]: 'category-court-filing',
+      [DocumentCategory.EVIDENCE]: 'category-evidence',
+      [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
+      [DocumentCategory.PLEADING]: 'category-pleading',
+      [DocumentCategory.MEMO]: 'category-memo',
+      [DocumentCategory.AGREEMENT]: 'category-agreement',
+      [DocumentCategory.COURT_ORDER]: 'category-court-order',
+      [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
+      [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
+      [DocumentCategory.OTHER]: 'category-other'
+    };
+    return classes[category] || 'category-other';
+  }
   getStatusClass(status: DocumentStatus): string {
     const classes: { [key in DocumentStatus]: string } = {
       [DocumentStatus.DRAFT]: 'status-draft',
@@ -191,15 +190,15 @@ export class DocumentListComponent implements OnInit {
   }
 
   getAccessLevelClass(accessLevel: AccessLevel | string): string {
-  const classes: { [key in AccessLevel]: string } = {
-    [AccessLevel.PUBLIC]: 'access-public',
-    [AccessLevel.PRIVATE]: 'access-private',
-    [AccessLevel.INTERNAL]: 'access-internal',
-    [AccessLevel.CONFIDENTIAL]: 'access-confidential',
-    [AccessLevel.RESTRICTED]: 'access-restricted'
-  };
-  return classes[accessLevel as AccessLevel] || 'access-private';
-}
+    const classes: Record<AccessLevel, string> = {
+      [AccessLevel.PUBLIC]: 'access-public',
+      [AccessLevel.PRIVATE]: 'access-private',
+      [AccessLevel.INTERNAL]: 'access-internal',
+      [AccessLevel.CONFIDENTIAL]: 'access-confidential',
+      [AccessLevel.RESTRICTED]: 'access-restricted'
+    };
+    return classes[accessLevel as AccessLevel] || 'access-private';
+  }
   formatFileSize(bytes: number): string {
     return this.documentService.formatFileSize(bytes);
   }

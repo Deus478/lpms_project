@@ -1,35 +1,35 @@
 using Microsoft.AspNetCore.Http;
-using System.ComponentModel.DataAnnotations; // Optional: for validation
 
 namespace DocumentManagement.DTOs
 {
     /// <summary>
-    /// DTO for handling the incoming document upload request from a form.
+    /// DTO for handling multipart/form-data uploads from clients.
     /// </summary>
     public class DocumentUploadRequest
     {
         /// <summary>
         /// The file to upload.
         /// </summary>
-        [Required] // Optional: Add validation
-        public IFormFile ?File { get; set; }
+        public IFormFile? File { get; set; }
 
         /// <summary>
-        /// Document description.
+        /// Optional title of the document.
         /// </summary>
-        [Required] // Optional: Add validation
-        public string ?Description { get; set; }
+        public string? Title { get; set; }
 
         /// <summary>
-        /// Type of document (e.g., "Contract", "Invoice").
+        /// Optional description.
         /// </summary>
-        [Required] // Optional: Add validation
-        public string ?DocumentType { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
-        /// Username or ID of uploader.
+        /// Client-provided category that maps to DocumentType in storage.
         /// </summary>
-        [Required] // Optional: Add validation
-        public string ?UploadedBy { get; set; }
+        public string? Category { get; set; }
+
+        /// <summary>
+        /// Access level classification (e.g., PUBLIC, PRIVATE).
+        /// </summary>
+        public string? AccessLevel { get; set; }
     }
 }
