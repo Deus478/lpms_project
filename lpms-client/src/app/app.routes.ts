@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
 
+import { DashboardOverviewComponent } from './dashboard/components/dashboard-overview/dashboard-overview.component';
 import { CaseListComponent } from './case-management/components/case-list/case-list.component';
 import { CaseFormComponent } from './case-management/components/case-form/case-form.component';
 import { CaseDetailsComponent } from './case-management/components/case-details/case-details.component';
+import { LoginComponent } from './auth/login.component';
 
 // 📂 Import document management components
 import { DocumentListComponent } from './document-management/components/document-list/document-list.component';
@@ -15,7 +17,9 @@ import { MeetingDetailComponent } from './meeting-management/components/meeting-
 import { ResolutionSummaryComponent } from './meeting-management/components/resolution-summary/resolution-summary.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/case-management', pathMatch: 'full' },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'dashboard', component: DashboardOverviewComponent },
 
   // 🧾 Case Management
   { path: 'case-management', component: CaseListComponent },
@@ -33,7 +37,7 @@ export const routes: Routes = [
   { path: 'meetings', component: MeetingListComponent },
   { path: 'meetings/create', component: MeetingFormComponent },
   { path: 'meetings/edit/:id', component: MeetingFormComponent },
-  { path: 'meetings/:id', component: MeetingDetailComponent },
   { path: 'meetings/resolution-summary', component: ResolutionSummaryComponent },
+  { path: 'meetings/:id', component: MeetingDetailComponent },
 ];
 

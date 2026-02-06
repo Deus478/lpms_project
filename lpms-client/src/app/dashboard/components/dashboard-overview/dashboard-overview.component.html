@@ -1,0 +1,85 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard Overview</h1>
+    <p>Welcome back, {{ currentUserName }}!</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error" class="dashboard-content">
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Cases</h3>
+        <p class="stat-number">{{ stats.totalCases }}</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Active Cases</h3>
+        <p class="stat-number">{{ stats.activeCases }}</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Pending Approvals</h3>
+        <p class="stat-number">{{ stats.pendingApprovals }}</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Contracts Expiring</h3>
+        <p class="stat-number">{{ stats.contractsExpiring }}</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Upcoming Meetings</h3>
+        <p class="stat-number">{{ stats.upcomingMeetings }}</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Unread Notifications</h3>
+        <p class="stat-number">{{ stats.unreadNotifications }}</p>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="action-buttons">
+        <button class="btn btn-primary" (click)="navigateToCases()">
+          View All Cases
+        </button>
+        <button class="btn btn-secondary" (click)="navigateToContracts()">
+          Manage Contracts
+        </button>
+        <button class="btn btn-secondary" (click)="navigateToMeetings()">
+          Schedule Meeting
+        </button>
+        <button class="btn btn-secondary" (click)="navigateToDocuments()">
+          Upload Document
+        </button>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+      <h2>Recent Activity</h2>
+      <div class="activity-list">
+        <div *ngFor="let activity of recentActivities" class="activity-item">
+          <div class="activity-icon">
+            <span>{{ getActivityIcon(activity.type) }}</span>
+          </div>
+          <div class="activity-content">
+            <p class="activity-title">{{ activity.title }}</p>
+            <p class="activity-description">{{ activity.description }}</p>
+            <p class="activity-time">{{ activity.timestamp | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

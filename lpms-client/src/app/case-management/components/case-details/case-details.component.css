@@ -27,12 +27,12 @@
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {

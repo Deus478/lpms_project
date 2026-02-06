@@ -1,6 +1,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
 import { Document, DocumentStatus, DocumentCategory, AccessLevel } from '../../models/document.model';
@@ -8,7 +9,7 @@ import { Document, DocumentStatus, DocumentCategory, AccessLevel } from '../../m
 @Component({
   selector: 'app-document-view',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './document-view.component.html',
   styleUrls: ['./document-view.component.css']
 })
@@ -18,6 +19,10 @@ export class DocumentViewComponent implements OnInit {
   documentId?: string;
  DocumentCategory = DocumentCategory; // ✅ expose enum to template
   AccessLevel = AccessLevel;           // ✅ optional, but useful for template too
+  DocumentStatus = DocumentStatus;
+  statusOptions = Object.values(DocumentStatus);
+  selectedStatus?: DocumentStatus;
+  isSavingStatus = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -39,11 +44,27 @@ export class DocumentViewComponent implements OnInit {
     this.documentService.getDocumentById(id).subscribe({
       next: (doc) => {
         this.document = doc;
+        this.selectedStatus = doc.status;
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading document:', error);
         this.isLoading = false;
+      }
+    });
+  }
+
+  updateStatus(): void {
+    if (!this.documentId || !this.selectedStatus) return;
+    if (this.document && this.document.status === this.selectedStatus) return;
+    this.isSavingStatus = true;
+    this.documentService.updateDocumentStatus(this.documentId, this.selectedStatus).subscribe({
+      next: (updated) => {
+        this.document = updated;
+        this.isSavingStatus = false;
+      },
+      error: () => {
+        this.isSavingStatus = false;
       }
     });
   }
@@ -103,26 +124,25 @@ export class DocumentViewComponent implements OnInit {
     this.router.navigate(['/document-management']);
   }
 
- getCategoryClass(category: DocumentCategory | undefined): string {
-  if (!category) return 'category-other';
-  
-  const classes: { [key in DocumentCategory]: string } = {
-    [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
-    [DocumentCategory.CONTRACT]: 'category-contract',
-    [DocumentCategory.COURT_FILING]: 'category-court-filing',
-    [DocumentCategory.EVIDENCE]: 'category-evidence',
-    [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
-    [DocumentCategory.PLEADING]: 'category-pleading',
-    [DocumentCategory.MEMO]: 'category-memo',
-    [DocumentCategory.AGREEMENT]: 'category-agreement',
-    [DocumentCategory.COURT_ORDER]: 'category-court-order',
-    [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
-    [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
-    [DocumentCategory.OTHER]: 'category-other'
-  };
-  return classes[category] || 'category-other';
-}
+  getCategoryClass(category: DocumentCategory | undefined): string {
+    if (!category) return 'category-other';
 
+    const classes: Partial<Record<DocumentCategory, string>> = {
+      [DocumentCategory.LEGAL_BRIEF]: 'category-legal-brief',
+      [DocumentCategory.CONTRACT]: 'category-contract',
+      [DocumentCategory.COURT_FILING]: 'category-court-filing',
+      [DocumentCategory.EVIDENCE]: 'category-evidence',
+      [DocumentCategory.CORRESPONDENCE]: 'category-correspondence',
+      [DocumentCategory.PLEADING]: 'category-pleading',
+      [DocumentCategory.MEMO]: 'category-memo',
+      [DocumentCategory.AGREEMENT]: 'category-agreement',
+      [DocumentCategory.COURT_ORDER]: 'category-court-order',
+      [DocumentCategory.INTERNAL_MEMO]: 'category-internal-memo',
+      [DocumentCategory.CLIENT_DOCUMENT]: 'category-client-document',
+      [DocumentCategory.OTHER]: 'category-other'
+    };
+    return classes[category] || 'category-other';
+  }
 
   getStatusClass(status: DocumentStatus): string {
     const classes: { [key in DocumentStatus]: string } = {
@@ -135,16 +155,16 @@ export class DocumentViewComponent implements OnInit {
     return classes[status];
   }
 
- getAccessLevelClass(accessLevel: AccessLevel | string): string {
-  const classes: { [key in AccessLevel]: string } = {
-    [AccessLevel.PUBLIC]: 'access-public',
-    [AccessLevel.PRIVATE]: 'access-private',
-    [AccessLevel.INTERNAL]: 'access-internal',
-    [AccessLevel.CONFIDENTIAL]: 'access-confidential',
-    [AccessLevel.RESTRICTED]: 'access-restricted'
-  };
-  return classes[accessLevel as AccessLevel] || 'access-private';
-}
+  getAccessLevelClass(accessLevel: AccessLevel | string): string {
+    const classes: Record<AccessLevel, string> = {
+      [AccessLevel.PUBLIC]: 'access-public',
+      [AccessLevel.PRIVATE]: 'access-private',
+      [AccessLevel.INTERNAL]: 'access-internal',
+      [AccessLevel.CONFIDENTIAL]: 'access-confidential',
+      [AccessLevel.RESTRICTED]: 'access-restricted'
+    };
+    return classes[accessLevel as AccessLevel] || 'access-private';
+  }
   formatFileSize(bytes: number): string {
     return this.documentService.formatFileSize(bytes);
   }

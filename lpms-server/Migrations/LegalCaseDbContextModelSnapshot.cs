@@ -22,6 +22,66 @@ namespace lpms_server.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("LegalCaseManagement.Models.AuditTrail", b =>
+                {
+                    b.Property<int>("AuditTrailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AuditTrailId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityIdentifier")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AuditTrailId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditTrails");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Board", b =>
                 {
                     b.Property<int>("BoardId")
@@ -62,6 +122,10 @@ namespace lpms_server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseId"));
 
+                    b.Property<string>("AssignedJudge")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int>("AssignedLawyerId")
                         .HasColumnType("int");
 
@@ -69,6 +133,19 @@ namespace lpms_server.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CaseSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("CaseType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CourtCaseNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("CourtId")
                         .HasColumnType("int");
@@ -91,10 +168,28 @@ namespace lpms_server.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("FinancialExposure")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("InitiatingUserId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<string>("JudgeChamber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OriginatingBranch")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OriginatingDepartment")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Outcome")
                         .HasMaxLength(500)
@@ -104,6 +199,11 @@ namespace lpms_server.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("RiskLevel")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -137,6 +237,8 @@ namespace lpms_server.Migrations
 
                     b.HasIndex("DefendantLawyerId");
 
+                    b.HasIndex("InitiatingUserId");
+
                     b.HasIndex("PlaintiffLawyerId");
 
                     b.ToTable("Cases");
@@ -147,17 +249,63 @@ namespace lpms_server.Migrations
                             CaseId = 1001,
                             AssignedLawyerId = 1,
                             CaseNumber = "SEED-CASE-1001",
+                            CaseType = "",
                             CourtId = 1,
                             CreatedAt = new DateTime(2025, 10, 21, 9, 0, 0, 0, DateTimeKind.Unspecified),
                             DateFiled = new DateTime(2025, 10, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Sample seeded case for demonstration",
                             EndDate = new DateTime(2025, 12, 31, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            FinancialExposure = 0m,
                             IsActive = true,
                             Priority = "Medium",
+                            RiskLevel = "Medium",
                             StartDate = new DateTime(2025, 10, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Status = "Pending",
                             Title = "Alice vs. Bob"
                         });
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseDocument", b =>
+                {
+                    b.Property<int>("CaseDocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseDocumentId"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("AddedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CaseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsConfidential")
+                        .HasColumnType("bit");
+
+                    b.HasKey("CaseDocumentId");
+
+                    b.HasIndex("AddedByUserId");
+
+                    b.HasIndex("CaseId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.ToTable("CaseDocuments");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.CaseLawyer", b =>
@@ -257,6 +405,133 @@ namespace lpms_server.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseWorkflow", b =>
+                {
+                    b.Property<int>("CaseWorkflowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseWorkflowId"));
+
+                    b.Property<int>("CaseId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CaseId1")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkflowTemplateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CaseWorkflowId");
+
+                    b.HasIndex("CaseId");
+
+                    b.HasIndex("CaseId1");
+
+                    b.HasIndex("WorkflowTemplateId");
+
+                    b.ToTable("CaseWorkflows");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseWorkflowStep", b =>
+                {
+                    b.Property<int>("CaseWorkflowStepId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseWorkflowStepId"));
+
+                    b.Property<string>("ApproverRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("AssignedUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CaseWorkflowId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LegalOpinion")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StepName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkflowStepTemplateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CaseWorkflowStepId");
+
+                    b.HasIndex("AssignedUserId");
+
+                    b.HasIndex("CaseWorkflowId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WorkflowStepTemplateId");
+
+                    b.ToTable("CaseWorkflowSteps");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Committee", b =>
                 {
                     b.Property<int>("CommitteeId")
@@ -292,6 +567,252 @@ namespace lpms_server.Migrations
                     b.HasIndex("BoardId");
 
                     b.ToTable("Committees");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Contract", b =>
+                {
+                    b.Property<int>("ContractId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractId"));
+
+                    b.Property<int?>("AssignedLawyerId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("AutoRenew")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("ContractValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Counterparty")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)")
+                        .HasDefaultValue("USD");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExecutionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RenewalNoticeDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestingDepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Medium");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Draft");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ContractId");
+
+                    b.HasIndex("AssignedLawyerId");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("Contracts");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractApproval", b =>
+                {
+                    b.Property<int>("ContractApprovalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractApprovalId"));
+
+                    b.Property<string>("ApprovalLevel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("ApproverUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Pending");
+
+                    b.HasKey("ContractApprovalId");
+
+                    b.HasIndex("ApproverUserId");
+
+                    b.HasIndex("ContractId");
+
+                    b.ToTable("ContractApprovals");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractDocument", b =>
+                {
+                    b.Property<int>("ContractDocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractDocumentId"));
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("ContractDocumentId");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.ToTable("ContractDocuments");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractRenewal", b =>
+                {
+                    b.Property<int>("ContractRenewalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContractRenewalId"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("NewValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("RenewalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RenewalType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReviewNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<string>("Terms")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.HasKey("ContractRenewalId");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("ReviewedBy");
+
+                    b.ToTable("ContractRenewals");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Court", b =>
@@ -437,12 +958,34 @@ namespace lpms_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccessLevel")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime?>("ArchivedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfidentialityLevel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DisposalReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("DisposedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DisposedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DocumentDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("DocumentType")
                         .HasMaxLength(100)
@@ -475,15 +1018,52 @@ namespace lpms_server.Migrations
                     b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDisposed")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsEncrypted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUnderLegalHold")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastAccessedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("LegalHoldDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LegalHoldReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("OwnerDepartment")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RetentionCategory")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("RetentionExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RetentionYears")
+                        .HasColumnType("int");
+
                     b.Property<string>("StoragePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("UploadedBy")
                         .IsRequired()
@@ -555,6 +1135,76 @@ namespace lpms_server.Migrations
                     b.HasIndex("CourtId");
 
                     b.ToTable("Hearings");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Judge", b =>
+                {
+                    b.Property<int>("JudgeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JudgeId"));
+
+                    b.Property<DateTime?>("AppointmentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Biography")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Chambers")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("CourtId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Courtroom")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("JudgeId");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("CourtId", "LastName", "FirstName");
+
+                    b.ToTable("Judges");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Lawyer", b =>
@@ -655,6 +1305,9 @@ namespace lpms_server.Migrations
                     b.Property<int?>("BoardId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ChairpersonUserId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CommitteeId")
                         .HasColumnType("int");
 
@@ -663,9 +1316,20 @@ namespace lpms_server.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Location")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("MeetingType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("MinQuorum")
+                        .HasColumnType("int");
 
                     b.Property<string>("RecurrenceDays")
                         .HasMaxLength(50)
@@ -683,6 +1347,9 @@ namespace lpms_server.Migrations
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("SecretaryUserId")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("SeriesId")
                         .HasColumnType("uniqueidentifier");
@@ -705,7 +1372,11 @@ namespace lpms_server.Migrations
 
                     b.HasIndex("BoardId");
 
+                    b.HasIndex("ChairpersonUserId");
+
                     b.HasIndex("CommitteeId");
+
+                    b.HasIndex("SecretaryUserId");
 
                     b.HasIndex("SeriesId");
 
@@ -780,6 +1451,111 @@ namespace lpms_server.Migrations
                     b.HasIndex("MeetingId");
 
                     b.ToTable("Minutes");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Notification", b =>
+                {
+                    b.Property<int>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
+
+                    b.Property<string>("ActionUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.NotificationPreference", b =>
+                {
+                    b.Property<int>("NotificationPreferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationPreferenceId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("EmailEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("InAppEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Setting")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("SmsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("NotificationPreferenceId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("NotificationPreferences");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Party", b =>
@@ -875,6 +1651,41 @@ namespace lpms_server.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.Permission", b =>
+                {
+                    b.Property<int>("PermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("PermissionId");
+
+                    b.ToTable("Permissions");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Resolution", b =>
                 {
                     b.Property<int>("ResolutionId")
@@ -883,6 +1694,10 @@ namespace lpms_server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResolutionId"));
 
+                    b.Property<string>("ActionItems")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -890,6 +1705,10 @@ namespace lpms_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(4000)
@@ -901,9 +1720,14 @@ namespace lpms_server.Migrations
                     b.Property<int>("MeetingId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ResponsibleParty")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("RequiresBoardFollowUp")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ResponsibleUserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -921,7 +1745,298 @@ namespace lpms_server.Migrations
 
                     b.HasIndex("MeetingId");
 
+                    b.HasIndex("ResponsibleUserId");
+
                     b.ToTable("Resolutions");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoleId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.RolePermission", b =>
+                {
+                    b.Property<int>("RolePermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RolePermissionId"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RolePermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.SystemLog", b =>
+                {
+                    b.Property<int>("SystemLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SystemLogId"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("LogLevel")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("SystemLogId");
+
+                    b.ToTable("SystemLogs");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("EmployeeId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.UserRole", b =>
+                {
+                    b.Property<int>("UserRoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserRoleId"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserRoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.WorkflowStepTemplate", b =>
+                {
+                    b.Property<int>("WorkflowStepTemplateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkflowStepTemplateId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ApproverRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("StepName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TimeoutHours")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkflowTemplateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WorkflowStepTemplateId");
+
+                    b.HasIndex("WorkflowTemplateId");
+
+                    b.ToTable("WorkflowStepTemplates");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.WorkflowTemplate", b =>
+                {
+                    b.Property<int>("WorkflowTemplateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkflowTemplateId"));
+
+                    b.Property<string>("CaseType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("WorkflowTemplateId");
+
+                    b.ToTable("WorkflowTemplates");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.AuditTrail", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "User")
+                        .WithMany("AuditTrails")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Case", b =>
@@ -943,6 +2058,10 @@ namespace lpms_server.Migrations
                         .HasForeignKey("DefendantLawyerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("LegalCaseManagement.Models.User", "InitiatingUser")
+                        .WithMany()
+                        .HasForeignKey("InitiatingUserId");
+
                     b.HasOne("LegalCaseManagement.Models.Lawyer", "PlaintiffLawyer")
                         .WithMany()
                         .HasForeignKey("PlaintiffLawyerId")
@@ -954,7 +2073,34 @@ namespace lpms_server.Migrations
 
                     b.Navigation("DefendantLawyer");
 
+                    b.Navigation("InitiatingUser");
+
                     b.Navigation("PlaintiffLawyer");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseDocument", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "AddedByUser")
+                        .WithMany()
+                        .HasForeignKey("AddedByUserId");
+
+                    b.HasOne("LegalCaseManagement.Models.Case", "Case")
+                        .WithMany("CaseDocuments")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AddedByUser");
+
+                    b.Navigation("Case");
+
+                    b.Navigation("Document");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.CaseLawyer", b =>
@@ -995,6 +2141,59 @@ namespace lpms_server.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseWorkflow", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Case", "Case")
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.Case", null)
+                        .WithMany("Workflows")
+                        .HasForeignKey("CaseId1");
+
+                    b.HasOne("LegalCaseManagement.Models.WorkflowTemplate", "WorkflowTemplate")
+                        .WithMany()
+                        .HasForeignKey("WorkflowTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Case");
+
+                    b.Navigation("WorkflowTemplate");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseWorkflowStep", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "AssignedUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalCaseManagement.Models.CaseWorkflow", "CaseWorkflow")
+                        .WithMany("Steps")
+                        .HasForeignKey("CaseWorkflowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.User", null)
+                        .WithMany("WorkflowSteps")
+                        .HasForeignKey("UserId");
+
+                    b.HasOne("LegalCaseManagement.Models.WorkflowStepTemplate", "WorkflowStepTemplate")
+                        .WithMany()
+                        .HasForeignKey("WorkflowStepTemplateId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("AssignedUser");
+
+                    b.Navigation("CaseWorkflow");
+
+                    b.Navigation("WorkflowStepTemplate");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Committee", b =>
                 {
                     b.HasOne("LegalCaseManagement.Models.Board", "Board")
@@ -1004,6 +2203,79 @@ namespace lpms_server.Migrations
                         .IsRequired();
 
                     b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Contract", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "AssignedLawyer")
+                        .WithMany()
+                        .HasForeignKey("AssignedLawyerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalCaseManagement.Models.Party", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedLawyer");
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractApproval", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "ApproverUser")
+                        .WithMany()
+                        .HasForeignKey("ApproverUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.Contract", "Contract")
+                        .WithMany("ContractApprovals")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApproverUser");
+
+                    b.Navigation("Contract");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractDocument", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Contract", "Contract")
+                        .WithMany("ContractDocuments")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.ContractRenewal", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Contract", "Contract")
+                        .WithMany("ContractRenewals")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.User", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Contract");
+
+                    b.Navigation("ReviewedByUser");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Deadline", b =>
@@ -1035,6 +2307,17 @@ namespace lpms_server.Migrations
                     b.Navigation("Court");
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.Judge", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Court", "Court")
+                        .WithMany("Judges")
+                        .HasForeignKey("CourtId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Court");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Meeting", b =>
                 {
                     b.HasOne("LegalCaseManagement.Models.Board", "Board")
@@ -1042,14 +2325,26 @@ namespace lpms_server.Migrations
                         .HasForeignKey("BoardId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("LegalCaseManagement.Models.User", "ChairpersonUser")
+                        .WithMany()
+                        .HasForeignKey("ChairpersonUserId");
+
                     b.HasOne("LegalCaseManagement.Models.Committee", "Committee")
                         .WithMany("Meetings")
                         .HasForeignKey("CommitteeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("LegalCaseManagement.Models.User", "SecretaryUser")
+                        .WithMany()
+                        .HasForeignKey("SecretaryUserId");
+
                     b.Navigation("Board");
 
+                    b.Navigation("ChairpersonUser");
+
                     b.Navigation("Committee");
+
+                    b.Navigation("SecretaryUser");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.MeetingAttendance", b =>
@@ -1074,6 +2369,28 @@ namespace lpms_server.Migrations
                     b.Navigation("Meeting");
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.Notification", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.NotificationPreference", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.User", "User")
+                        .WithMany("NotificationPreferences")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Resolution", b =>
                 {
                     b.HasOne("LegalCaseManagement.Models.Meeting", "Meeting")
@@ -1082,7 +2399,64 @@ namespace lpms_server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("LegalCaseManagement.Models.User", "ResponsibleUser")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Meeting");
+
+                    b.Navigation("ResponsibleUser");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.RolePermission", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.UserRole", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalCaseManagement.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.WorkflowStepTemplate", b =>
+                {
+                    b.HasOne("LegalCaseManagement.Models.WorkflowTemplate", "WorkflowTemplate")
+                        .WithMany("StepTemplates")
+                        .HasForeignKey("WorkflowTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkflowTemplate");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Board", b =>
@@ -1094,6 +2468,8 @@ namespace lpms_server.Migrations
 
             modelBuilder.Entity("LegalCaseManagement.Models.Case", b =>
                 {
+                    b.Navigation("CaseDocuments");
+
                     b.Navigation("CaseLawyers");
 
                     b.Navigation("CaseParties");
@@ -1101,6 +2477,13 @@ namespace lpms_server.Migrations
                     b.Navigation("Deadlines");
 
                     b.Navigation("Hearings");
+
+                    b.Navigation("Workflows");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.CaseWorkflow", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Committee", b =>
@@ -1108,11 +2491,22 @@ namespace lpms_server.Migrations
                     b.Navigation("Meetings");
                 });
 
+            modelBuilder.Entity("LegalCaseManagement.Models.Contract", b =>
+                {
+                    b.Navigation("ContractApprovals");
+
+                    b.Navigation("ContractDocuments");
+
+                    b.Navigation("ContractRenewals");
+                });
+
             modelBuilder.Entity("LegalCaseManagement.Models.Court", b =>
                 {
                     b.Navigation("Cases");
 
                     b.Navigation("Hearings");
+
+                    b.Navigation("Judges");
                 });
 
             modelBuilder.Entity("LegalCaseManagement.Models.Lawyer", b =>
@@ -1134,6 +2528,36 @@ namespace lpms_server.Migrations
             modelBuilder.Entity("LegalCaseManagement.Models.Party", b =>
                 {
                     b.Navigation("CaseParties");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.User", b =>
+                {
+                    b.Navigation("AuditTrails");
+
+                    b.Navigation("NotificationPreferences");
+
+                    b.Navigation("Notifications");
+
+                    b.Navigation("UserRoles");
+
+                    b.Navigation("WorkflowSteps");
+                });
+
+            modelBuilder.Entity("LegalCaseManagement.Models.WorkflowTemplate", b =>
+                {
+                    b.Navigation("StepTemplates");
                 });
 #pragma warning restore 612, 618
         }

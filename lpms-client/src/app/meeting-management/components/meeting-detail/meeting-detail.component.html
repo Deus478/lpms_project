@@ -48,7 +48,7 @@
           <div class="list-item">
             <div class="meta">
               <div><strong>{{ res.title }}</strong></div>
-              <div>Status: {{ res.status }}</div>
+              <div>Status: {{ displayResolutionStatus(res.status) }}</div>
               <div>Due: {{ formatDate(res.dueDate) || '-' }}</div>
             </div>
             <div class="content">{{ res.description }}</div>

@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace LegalCaseManagement.DTOs
 {
@@ -14,6 +15,12 @@ namespace LegalCaseManagement.DTOs
         public int MeetingId { get; set; }
         public DateTime RecordedDate { get; set; }
         public string Content { get; set; } = string.Empty;
+        public Guid? DocumentId { get; set; }
+    }
+
+    public class UpdateMinuteDocumentDto
+    {
+        [JsonPropertyName("documentId")]
         public Guid? DocumentId { get; set; }
     }
 }

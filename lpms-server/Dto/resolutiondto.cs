@@ -7,12 +7,16 @@ namespace LegalCaseManagement.DTOs
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public DateTime? DueDate { get; set; }
-        public string? ResponsibleParty { get; set; }
+        public int ResponsibleUserId { get; set; }
+        public string? ActionItems { get; set; }
+        public string? Department { get; set; }
+        public int Priority { get; set; } = 1;
+        public bool RequiresBoardFollowUp { get; set; } = false;
     }
 
     public class UpdateResolutionStatusDto
     {
-        public string Status { get; set; } = string.Empty; // Pending, InProgress, Completed
+        public string Status { get; set; } = string.Empty; // Pending, InProgress, Completed, Overdue
         public DateTime? CompletedAt { get; set; }
     }
 
@@ -24,7 +28,11 @@ namespace LegalCaseManagement.DTOs
         public string? Description { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime? DueDate { get; set; }
-        public string? ResponsibleParty { get; set; }
+        public int ResponsibleUserId { get; set; }
+        public string? ActionItems { get; set; }
+        public string? Department { get; set; }
+        public int Priority { get; set; }
+        public bool RequiresBoardFollowUp { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
     }

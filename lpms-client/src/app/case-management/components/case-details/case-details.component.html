@@ -22,7 +22,7 @@
 
       <div class="badges">
         <span class="badge" [ngClass]="getStatusClass(case?.status)">
-          {{ case?.status }}
+          {{ getDisplayStatus() }}
         </span>
         <span class="badge" [ngClass]="getPriorityClass(case?.priority)">
           {{ case?.priority }}
@@ -37,6 +37,8 @@
     <div class="due-date-warning" *ngIf="isDueSoon() && !isOverdue()">
       ⏰ This case is due soon!
     </div>
+
+    
 
     <div class="details-grid">
       <!-- Main Information -->
@@ -96,7 +98,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let cp of case.parties">
+          <tr *ngFor="let cp of case?.parties">
             <td>{{ cp.role }}</td>
             <td>{{ cp.party.fullName }}</td>
             <td>{{ cp.party.partyType || '-' }}</td>
@@ -204,7 +206,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let h of case.hearings">
+          <tr *ngFor="let h of case?.hearings">
             <td>{{ h.date | date:'shortDate' }}</td>
             <td>{{ h.time }}</td>
             <td>{{ h.court?.name || '-' }}</td>
@@ -319,7 +321,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let d of case.deadlines">
+          <tr *ngFor="let d of case?.deadlines">
             <td>{{ d.description }}</td>
             <td>{{ d.dueDate | date:'shortDate' }}</td>
             <td>{{ d.priority }}</td>

@@ -22,12 +22,33 @@ namespace LegalCaseManagement.Data
         public DbSet<Hearing> Hearings { get; set; }
         public DbSet<Deadline> Deadlines { get; set; }
         public DbSet<Document> Documents { get; set; }
+        public DbSet<Judge> Judges { get; set; }
         public DbSet<Board> Boards { get; set; }
         public DbSet<Committee> Committees { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingAttendance> MeetingAttendances { get; set; }
         public DbSet<Minute> Minutes { get; set; }
         public DbSet<Resolution> Resolutions { get; set; }
+
+        // New LCMS entities
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<WorkflowTemplate> WorkflowTemplates { get; set; }
+        public DbSet<WorkflowStepTemplate> WorkflowStepTemplates { get; set; }
+        public DbSet<CaseWorkflow> CaseWorkflows { get; set; }
+        public DbSet<CaseWorkflowStep> CaseWorkflowSteps { get; set; }
+        public DbSet<Contract> Contracts { get; set; }
+        public DbSet<ContractDocument> ContractDocuments { get; set; }
+        public DbSet<ContractApproval> ContractApprovals { get; set; }
+        public DbSet<ContractRenewal> ContractRenewals { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+        public DbSet<AuditTrail> AuditTrails { get; set; }
+        public DbSet<SystemLog> SystemLogs { get; set; }
+        public DbSet<CaseDocument> CaseDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -103,6 +124,30 @@ namespace LegalCaseManagement.Data
                 entity.Property(e => e.Phone).HasMaxLength(20);
                 entity.Property(e => e.IsActive).HasDefaultValue(true);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure Judge entity
+            modelBuilder.Entity<Judge>(entity =>
+            {
+                entity.HasKey(e => e.JudgeId);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).HasMaxLength(200);
+                entity.Property(e => e.Phone).HasMaxLength(20);
+                entity.Property(e => e.Title).HasMaxLength(100);
+                entity.Property(e => e.Chambers).HasMaxLength(100);
+                entity.Property(e => e.Courtroom).HasMaxLength(100);
+                entity.Property(e => e.Biography).HasMaxLength(1000);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasIndex(e => e.Email).IsUnique(false);
+                entity.HasIndex(e => new { e.CourtId, e.LastName, e.FirstName });
+
+                entity.HasOne(e => e.Court)
+                      .WithMany(c => c.Judges)
+                      .HasForeignKey(e => e.CourtId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configure Party entity
@@ -300,13 +345,127 @@ namespace LegalCaseManagement.Data
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.Description).HasMaxLength(4000);
                 entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending");
-                entity.Property(e => e.ResponsibleParty).HasMaxLength(500);
+                entity.Property(e => e.ResponsibleUserId).IsRequired();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
                 entity.HasOne(e => e.Meeting)
                       .WithMany(m => m.Resolutions)
                       .HasForeignKey(e => e.MeetingId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Contract entity
+            modelBuilder.Entity<Contract>(entity =>
+            {
+                entity.HasKey(e => e.ContractId);
+                entity.Property(e => e.ContractNumber).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.ContractType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Draft");
+                entity.Property(e => e.RequestingDepartmentId).IsRequired();
+                entity.Property(e => e.Counterparty).HasMaxLength(500);
+                entity.Property(e => e.Currency).HasMaxLength(3).HasDefaultValue("USD");
+                entity.Property(e => e.RiskLevel).HasMaxLength(20).HasDefaultValue("Medium");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.Client)
+                      .WithMany()
+                      .HasForeignKey(e => e.ClientId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.AssignedLawyer)
+                      .WithMany()
+                      .HasForeignKey(e => e.AssignedLawyerId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure NotificationPreference entity
+            modelBuilder.Entity<NotificationPreference>(entity =>
+            {
+                entity.HasKey(e => e.NotificationPreferenceId);
+                entity.Property(e => e.NotificationType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Setting).HasMaxLength(100);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.NotificationPreferences)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure SystemLog entity
+            modelBuilder.Entity<SystemLog>(entity =>
+            {
+                entity.HasKey(e => e.SystemLogId);
+                entity.Property(e => e.LogLevel).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Message).IsRequired();
+                entity.Property(e => e.Source).HasMaxLength(100);
+                entity.Property(e => e.UserId).HasMaxLength(100);
+                entity.Property(e => e.IPAddress).HasMaxLength(50);
+                entity.Property(e => e.UserAgent).HasMaxLength(100);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure ContractDocument entity
+            modelBuilder.Entity<ContractDocument>(entity =>
+            {
+                entity.HasKey(e => e.ContractDocumentId);
+                entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.UploadedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.Contract)
+                      .WithMany(c => c.ContractDocuments)
+                      .HasForeignKey(e => e.ContractId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Document)
+                      .WithMany()
+                      .HasForeignKey(e => e.DocumentId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ContractApproval entity
+            modelBuilder.Entity<ContractApproval>(entity =>
+            {
+                entity.HasKey(e => e.ContractApprovalId);
+                entity.Property(e => e.ApprovalLevel).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending");
+                entity.Property(e => e.Comments).HasMaxLength(1000);
+                entity.Property(e => e.RequestedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.Contract)
+                      .WithMany(c => c.ContractApprovals)
+                      .HasForeignKey(e => e.ContractId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.ApproverUser)
+                      .WithMany()
+                      .HasForeignKey(e => e.ApproverUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure ContractRenewal entity
+            modelBuilder.Entity<ContractRenewal>(entity =>
+            {
+                entity.HasKey(e => e.ContractRenewalId);
+                entity.Property(e => e.RenewalType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending");
+                entity.Property(e => e.Terms).HasMaxLength(1000);
+                entity.Property(e => e.ReviewNotes).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.Contract)
+                      .WithMany(c => c.ContractRenewals)
+                      .HasForeignKey(e => e.ContractId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.ReviewedByUser)
+                      .WithMany()
+                      .HasForeignKey(e => e.ReviewedBy)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Seed data for testing
@@ -450,6 +609,52 @@ namespace LegalCaseManagement.Data
                     CreatedAt = new DateTime(2025, 10, 21, 9, 5, 0)
                 }
             );
+
+            // Configure CaseWorkflow entity
+            modelBuilder.Entity<CaseWorkflow>(entity =>
+            {
+                entity.HasKey(e => e.CaseWorkflowId);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Notes).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.Case)
+                      .WithMany()
+                      .HasForeignKey(e => e.CaseId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.WorkflowTemplate)
+                      .WithMany()
+                      .HasForeignKey(e => e.WorkflowTemplateId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure CaseWorkflowStep entity to fix cascade path issue
+            modelBuilder.Entity<CaseWorkflowStep>(entity =>
+            {
+                entity.HasKey(e => e.CaseWorkflowStepId);
+                entity.Property(e => e.StepName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.ApproverRole).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Comments).HasMaxLength(2000);
+                entity.Property(e => e.LegalOpinion).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasOne(e => e.CaseWorkflow)
+                      .WithMany(cw => cw.Steps)
+                      .HasForeignKey(e => e.CaseWorkflowId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.WorkflowStepTemplate)
+                      .WithMany()
+                      .HasForeignKey(e => e.WorkflowStepTemplateId)
+                      .OnDelete(DeleteBehavior.NoAction); // Fix cascade path issue
+
+                entity.HasOne(e => e.AssignedUser)
+                      .WithMany()
+                      .HasForeignKey(e => e.AssignedUserId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
         }
     }
 }

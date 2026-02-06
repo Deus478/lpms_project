@@ -40,7 +40,7 @@
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: #007bff;
+  color: var(--primary);
   margin-bottom: 8px;
 }
 
@@ -103,12 +103,12 @@
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {
@@ -169,7 +169,7 @@ tbody tr:hover {
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  color: #007bff;
+  color: var(--primary);
 }
 
 .document-name:hover {

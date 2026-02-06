@@ -195,7 +195,8 @@ export class CaseFormComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating case:', error);
-          alert('Failed to create case. Please check the browser console for details.');
+          const msg = this.extractServerError(error);
+          alert(`Failed to create case: ${msg}`);
           this.isLoading = false;
         }
       });
@@ -207,8 +208,12 @@ export class CaseFormComponent implements OnInit {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
-    const time = `${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
-    return `CASE-${y}${m}${d}-${time}`;
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    const ms = String(date.getMilliseconds()).padStart(3, '0');
+    const rand = Math.random().toString(36).slice(2, 5).toUpperCase();
+    return `CASE-${y}${m}${d}-${hh}${mm}${ss}${ms}-${rand}`;
   }
 
   onCancel(): void {
@@ -237,5 +242,18 @@ export class CaseFormComponent implements OnInit {
       return `Minimum length is ${minLength} characters`;
     }
     return '';
+  }
+
+  private extractServerError(error: any): string {
+    const err = error?.error ?? error;
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    if (err?.message) return err.message;
+    if (err?.title) return err.title;
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return 'Unknown error';
+    }
   }
 }

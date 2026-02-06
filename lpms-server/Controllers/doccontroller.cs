@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
 using DocumentManagement.DTOs;
 using DocumentManagement.Services;
 using Microsoft.AspNetCore.Http;
@@ -30,15 +32,12 @@ namespace DocumentManagement.Controllers
 [Consumes("multipart/form-data")]
 [ProducesResponseType(typeof(DocumentResponseDto), StatusCodes.Status201Created)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
-public async Task<IActionResult> UploadDocument(
-    IFormFile file, 
-    string? title, 
-    string? description, 
-    string? category)
+public async Task<IActionResult> UploadDocument([FromForm] DocumentUploadRequest request)
 {
     try
     {
         // Validate file
+        var file = request.File;
         if (file == null || file.Length == 0)
         {
             return BadRequest(new { message = "No file uploaded" });
@@ -61,8 +60,9 @@ public async Task<IActionResult> UploadDocument(
         var uploadDto = new DocumentUploadDto
         {
             FileName = file.FileName,
-            Description = description,
-            DocumentType = category ?? "General",
+            Description = request.Description,
+            DocumentType = request.Category ?? "General",
+            AccessLevel = request.AccessLevel,
             UploadedBy = userId
         };
 

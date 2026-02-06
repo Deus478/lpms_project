@@ -20,7 +20,7 @@ export enum DocumentStatus {
   DELETED = 'DELETED'
 }
 
-// Added DocumentCategory enum with all values your components use
+// Document categories used throughout the application
 export enum DocumentCategory {
   LEGAL_BRIEF = 'LEGAL_BRIEF',
   CONTRACT = 'CONTRACT',
@@ -33,7 +33,13 @@ export enum DocumentCategory {
   COURT_ORDER = 'COURT_ORDER',
   INTERNAL_MEMO = 'INTERNAL_MEMO',
   CLIENT_DOCUMENT = 'CLIENT_DOCUMENT',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
+  BRIEF = 'BRIEF',
+  COURT_DOCUMENT = 'COURT_DOCUMENT',
+  DISCOVERY_DOCUMENT = 'DISCOVERY_DOCUMENT',
+  EXPERT_REPORT = 'EXPERT_REPORT',
+  MEDICAL_RECORD = 'MEDICAL_RECORD',
+  WITNESS_STATEMENT = 'WITNESS_STATEMENT'
 }
 
 // Added AccessLevel enum with all values your components use
@@ -62,7 +68,7 @@ export interface Document {
   version: number;
   isArchived: boolean;
   archivedAt?: Date;
-  accessLevel: 'PUBLIC' | 'PRIVATE' | 'CONFIDENTIAL';
+  accessLevel: AccessLevel;
   downloadUrl?: string;
   
   // Added missing properties that components expect
@@ -80,7 +86,7 @@ export interface DocumentUpload {
   caseId?: string;
   description?: string;
   tags?: string[];
-  accessLevel: 'PUBLIC' | 'PRIVATE' | 'CONFIDENTIAL';
+  accessLevel: AccessLevel;
   
   // Added category field that upload component uses
   category?: DocumentCategory;
@@ -118,7 +124,7 @@ export class DocumentModel implements Document {
   version: number;
   isArchived: boolean;
   archivedAt?: Date;
-  accessLevel: 'PUBLIC' | 'PRIVATE' | 'CONFIDENTIAL';
+  accessLevel: AccessLevel;
   downloadUrl?: string;
   category?: DocumentCategory;
   isEncrypted?: boolean;
@@ -144,7 +150,7 @@ export class DocumentModel implements Document {
     this.version = data.version || 1;
     this.isArchived = data.isArchived || false;
     this.archivedAt = data.archivedAt;
-    this.accessLevel = data.accessLevel || 'PRIVATE';
+    this.accessLevel = data.accessLevel || AccessLevel.PRIVATE;
     this.downloadUrl = data.downloadUrl;
     this.category = data.category;
     this.isEncrypted = data.isEncrypted || false;

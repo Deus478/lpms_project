@@ -22,19 +22,34 @@ namespace LegalCaseManagement.Models
         [MaxLength(4000)]
         public string? Description { get; set; }
 
+        [Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Pending"; // Pending, InProgress, Completed
+        public string Status { get; set; } = "Pending"; // Pending, InProgress, Completed, Overdue
 
         public DateTime? DueDate { get; set; }
 
+        [Required]
+        public int ResponsibleUserId { get; set; }
+
+        [MaxLength(1000)]
+        public string? ActionItems { get; set; }
+
         [MaxLength(500)]
-        public string? ResponsibleParty { get; set; }
+        public string? Department { get; set; }
+
+        public int Priority { get; set; } = 1; // 1=Low, 2=Medium, 3=High, 4=Critical
+
+        public bool RequiresBoardFollowUp { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; set; }
 
+        // Navigation Properties
         [ForeignKey("MeetingId")]
         public virtual Meeting Meeting { get; set; } = null!;
+
+        [ForeignKey("ResponsibleUserId")]
+        public virtual User ResponsibleUser { get; set; } = null!;
     }
 }
 

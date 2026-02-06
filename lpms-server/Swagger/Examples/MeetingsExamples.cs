@@ -46,7 +46,7 @@ namespace lpms_server.Swagger.Examples
             Title = "Approve FY Budget",
             Description = "Approve the proposed FY budget of $10M",
             DueDate = DateTime.UtcNow.AddDays(30),
-            ResponsibleParty = "CFO"
+            ResponsibleUserId = 1
         };
     }
 

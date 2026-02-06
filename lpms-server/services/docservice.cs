@@ -48,6 +48,7 @@ namespace DocumentManagement.Services
                 UploadedDate = DateTime.UtcNow,
                 FileHash = fileHash,
                 DocumentType = uploadDto.DocumentType,
+                AccessLevel = uploadDto.AccessLevel,
                 IsArchived = false,
                 IsEncrypted = false
             };
@@ -66,8 +67,9 @@ namespace DocumentManagement.Services
             {
                 throw new KeyNotFoundException($"Document with ID {documentId} not found");
             }
-
-            var storagePath = document.IsArchived ? document.EncryptedStoragePath !: document.StoragePath!;
+            var storagePath = document.IsArchived
+                ? (document.EncryptedStoragePath ?? document.StoragePath ?? throw new InvalidOperationException("No storage path for document"))
+                : (document.StoragePath ?? throw new InvalidOperationException("No storage path for document"));
             var fileData = await _storageService.RetrieveFileAsync(storagePath);
 
             // Decrypt if archived and encrypted
@@ -231,7 +233,8 @@ namespace DocumentManagement.Services
                 UploadedBy = document.UploadedBy,
                 UploadedDate = document.UploadedDate,
                 IsArchived = document.IsArchived,
-                DocumentType = document.DocumentType
+                DocumentType = document.DocumentType,
+                AccessLevel = document.AccessLevel
             };
         }
     }

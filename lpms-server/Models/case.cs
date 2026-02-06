@@ -23,6 +23,27 @@ namespace LegalCaseManagement.Models
         public string? Description { get; set; }
 
         [Required]
+        [StringLength(50)]
+        public string CaseType { get; set; } = string.Empty; // litigation, recovery, labor, regulatory, contractual
+
+        [StringLength(100)]
+        public string? OriginatingDepartment { get; set; }
+
+        [StringLength(100)]
+        public string? OriginatingBranch { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinancialExposure { get; set; }
+
+        [StringLength(20)]
+        public string RiskLevel { get; set; } = "Medium"; // Low, Medium, High, Critical
+
+        [StringLength(1000)]
+        public string? CaseSummary { get; set; }
+
+        public int? InitiatingUserId { get; set; }
+
+        [Required]
         public int AssignedLawyerId { get; set; }
 
         // Side-specific attorneys
@@ -53,6 +74,16 @@ namespace LegalCaseManagement.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
+        // Court escalation fields
+        [StringLength(100)]
+        public string? CourtCaseNumber { get; set; }
+
+        [StringLength(100)]
+        public string? AssignedJudge { get; set; }
+
+        [StringLength(100)]
+        public string? JudgeChamber { get; set; }
+
         // Navigation Properties
         public virtual Lawyer AssignedLawyer { get; set; } = null!;
         public virtual Lawyer? PlaintiffLawyer { get; set; }
@@ -62,5 +93,10 @@ namespace LegalCaseManagement.Models
         public virtual ICollection<Deadline> Deadlines { get; set; } = new List<Deadline>();
         public virtual ICollection<CaseParty> CaseParties { get; set; } = new List<CaseParty>();
         public virtual ICollection<CaseLawyer> CaseLawyers { get; set; } = new List<CaseLawyer>();
+        public virtual ICollection<CaseWorkflow> Workflows { get; set; } = new List<CaseWorkflow>();
+        public virtual ICollection<CaseDocument> CaseDocuments { get; set; } = new List<CaseDocument>();
+
+        [ForeignKey("InitiatingUserId")]
+        public virtual User? InitiatingUser { get; set; }
     }
 }

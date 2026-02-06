@@ -84,6 +84,43 @@ namespace LegalCaseManagement.Controllers
         }
 
         /// <summary>
+        /// Attach or change the linked document for an existing minute
+        /// </summary>
+        /// <param name="meetingId">Meeting ID</param>
+        /// <param name="minuteId">Minute ID</param>
+        /// <param name="dto">New DocumentId or null to clear</param>
+        [HttpPatch("{meetingId}/minutes/{minuteId}/document")]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateMinuteDocument(int meetingId, int minuteId, [FromBody] UpdateMinuteDocumentDto dto)
+        {
+            var minute = await _context.Minutes.FirstOrDefaultAsync(m => m.MeetingId == meetingId && m.MinuteId == minuteId);
+            if (minute == null) return NotFound();
+
+            minute.DocumentId = dto.DocumentId;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Alias using POST to attach or change the linked document for an existing minute
+        /// </summary>
+        [HttpPost("{meetingId}/minutes/{minuteId}/document")]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SetMinuteDocument(int meetingId, int minuteId, [FromBody] UpdateMinuteDocumentDto dto)
+        {
+            var minute = await _context.Minutes.FirstOrDefaultAsync(m => m.MeetingId == meetingId && m.MinuteId == minuteId);
+            if (minute == null) return NotFound();
+
+            minute.DocumentId = dto.DocumentId;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>
         /// Add a resolution to a meeting
         /// </summary>
         /// <param name="id">Meeting ID</param>
@@ -104,7 +141,7 @@ namespace LegalCaseManagement.Controllers
                 Title = dto.Title,
                 Description = dto.Description,
                 DueDate = dto.DueDate,
-                ResponsibleParty = dto.ResponsibleParty,
+                ResponsibleUserId = dto.ResponsibleUserId,
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -119,7 +156,7 @@ namespace LegalCaseManagement.Controllers
                 Description = res.Description,
                 Status = res.Status,
                 DueDate = res.DueDate,
-                ResponsibleParty = res.ResponsibleParty,
+                ResponsibleUserId = res.ResponsibleUserId,
                 CreatedAt = res.CreatedAt,
                 CompletedAt = res.CompletedAt
             });
@@ -149,7 +186,7 @@ namespace LegalCaseManagement.Controllers
                 Description = r.Description,
                 Status = r.Status,
                 DueDate = r.DueDate,
-                ResponsibleParty = r.ResponsibleParty,
+                ResponsibleUserId = r.ResponsibleUserId,
                 CreatedAt = r.CreatedAt,
                 CompletedAt = r.CompletedAt
             }).ToList();
@@ -247,6 +284,52 @@ namespace LegalCaseManagement.Controllers
                 .Include(m => m.Attendances)
                 .OrderByDescending(m => m.ScheduledDate)
                 .ToListAsync();
+            // Auto-update statuses based on schedule
+            var now = DateTime.UtcNow;
+            var changed = false;
+            foreach (var m in meetings)
+            {
+                if (m.Status == "Scheduled" && m.ScheduledDate <= now)
+                {
+                    m.Status = "Completed";
+                    m.UpdatedAt = DateTime.UtcNow;
+                    changed = true;
+                }
+            }
+            if (changed)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            var result = meetings.Select(m => new MeetingSummaryDto
+            {
+                MeetingId = m.MeetingId,
+                BoardId = m.BoardId,
+                CommitteeId = m.CommitteeId,
+                ScheduledDate = m.ScheduledDate,
+                Title = m.Title,
+                Status = m.Status,
+                Location = m.Location,
+                AttendanceCount = m.Attendances.Count
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get upcoming meetings
+        /// </summary>
+        /// <returns>List of upcoming meeting summaries</returns>
+        [HttpGet("upcoming")]
+        [ProducesResponseType(typeof(List<MeetingSummaryDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<MeetingSummaryDto>>> GetUpcomingMeetings()
+        {
+            var now = DateTime.UtcNow;
+            var meetings = await _context.Meetings
+                .Include(m => m.Attendances)
+                .Where(m => m.ScheduledDate > now && m.Status == "Scheduled")
+                .OrderBy(m => m.ScheduledDate)
+                .ToListAsync();
 
             var result = meetings.Select(m => new MeetingSummaryDto
             {
@@ -283,6 +366,12 @@ namespace LegalCaseManagement.Controllers
             if (!string.IsNullOrWhiteSpace(dto.Agenda)) meeting.Agenda = dto.Agenda;
             if (!string.IsNullOrWhiteSpace(dto.Status)) meeting.Status = dto.Status;
             meeting.UpdatedAt = DateTime.UtcNow;
+
+            // Ensure automatic completion if date has passed
+            if (meeting.Status == "Scheduled" && meeting.ScheduledDate <= DateTime.UtcNow)
+            {
+                meeting.Status = "Completed";
+            }
 
             await _context.SaveChangesAsync();
             return NoContent();

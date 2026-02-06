@@ -41,6 +41,21 @@ namespace LegalCaseManagement.Data
                 await context.SaveChangesAsync(cancellationToken);
             }
 
+            // Judges
+            if (!await context.Judges.AnyAsync(cancellationToken))
+            {
+                var courtIds = await context.Courts.Select(c => c.CourtId).ToListAsync(cancellationToken);
+                var firstCourtId = courtIds.First();
+                var secondCourtId = courtIds.Skip(1).FirstOrDefault(firstCourtId);
+
+                context.Judges.AddRange(new[]
+                {
+                    new Judge { FirstName = "Emily", LastName = "Carter", Email = "ecarter@court.gov", Phone = "555-0401", Title = "Hon.", CourtId = firstCourtId, Chambers = "A1", Courtroom = "101", AppointmentDate = DateTime.UtcNow.AddYears(-5), IsActive = true },
+                    new Judge { FirstName = "Michael", LastName = "Rodriguez", Email = "mrodriguez@court.gov", Phone = "555-0402", Title = "Hon.", CourtId = secondCourtId, Chambers = "B2", Courtroom = "202", AppointmentDate = DateTime.UtcNow.AddYears(-3), IsActive = true }
+                });
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
             // Cases (with parties, hearings, deadlines)
             if (!await context.Cases.AnyAsync(cancellationToken))
             {
@@ -140,7 +155,7 @@ namespace LegalCaseManagement.Data
                     Description = "Approve FY budget",
                     Status = "Pending",
                     DueDate = DateTime.UtcNow.Date.AddDays(30),
-                    ResponsibleParty = "CFO"
+                    ResponsibleUserId = 1 // Default to first user
                 });
 
                 await context.SaveChangesAsync(cancellationToken);

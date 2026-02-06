@@ -133,6 +133,81 @@ namespace LegalCaseManagement.Mapping
                 .ForMember(dest => dest.ActiveCases, opt => opt.MapFrom(src => src.Cases.Count(c => c.IsActive && c.Status == "Active")))
                 .ForMember(dest => dest.UpcomingHearings, opt => opt.MapFrom(src => src.Hearings
                     .Count(h => h.Status == "Scheduled" && h.Date > DateTime.UtcNow && h.Date <= DateTime.UtcNow.AddDays(30))));
+
+            // User and Role mappings
+            CreateMap<User, UserDto>();
+            CreateMap<CreateUserDto, User>()
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+
+            CreateMap<Role, RoleDto>();
+            CreateMap<UserRole, UserRoleDto>();
+            CreateMap<Permission, PermissionDto>();
+
+            // Contract mappings
+            CreateMap<Contract, ContractDto>();
+            CreateMap<CreateContractDto, Contract>()
+                .ForMember(dest => dest.ContractId, opt => opt.Ignore())
+                .ForMember(dest => dest.ContractNumber, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+            CreateMap<ContractDocument, ContractDocumentDto>();
+            CreateMap<ContractApproval, ContractApprovalDto>();
+
+            // Workflow mappings
+            CreateMap<WorkflowTemplate, WorkflowTemplateDto>();
+            CreateMap<WorkflowStepTemplate, WorkflowStepTemplateDto>();
+            CreateMap<CreateWorkflowTemplateDto, WorkflowTemplate>()
+                .ForMember(dest => dest.WorkflowTemplateId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+
+            CreateMap<CreateWorkflowStepTemplateDto, WorkflowStepTemplate>()
+                .ForMember(dest => dest.WorkflowStepTemplateId, opt => opt.Ignore());
+
+            CreateMap<CaseWorkflow, CaseWorkflowDto>();
+            CreateMap<CaseWorkflowStep, CaseWorkflowStepDto>();
+
+            // Notification mappings
+            CreateMap<Notification, NotificationDto>();
+            CreateMap<CreateNotificationDto, Notification>()
+                .ForMember(dest => dest.NotificationId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsRead, opt => opt.MapFrom(src => false));
+
+            CreateMap<NotificationPreference, NotificationPreferenceDto>();
+
+            // Contract mappings
+            CreateMap<Contract, ContractDto>();
+            CreateMap<CreateContractDto, Contract>()
+                .ForMember(dest => dest.ContractId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Draft"));
+
+            CreateMap<ContractDocument, ContractDocumentDto>();
+            CreateMap<AddContractDocumentDto, ContractDocument>()
+                .ForMember(dest => dest.ContractDocumentId, opt => opt.Ignore())
+                .ForMember(dest => dest.UploadedAt, opt => opt.Ignore());
+
+            CreateMap<ContractApproval, ContractApprovalDto>();
+            CreateMap<SubmitForApprovalDto, ContractApproval>()
+                .ForMember(dest => dest.ContractApprovalId, opt => opt.Ignore())
+                .ForMember(dest => dest.RequestedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"));
+
+            CreateMap<ContractRenewal, ContractRenewalDto>();
+
+            // Resolution mappings
+            CreateMap<Resolution, ResolutionDto>();
+            CreateMap<CreateResolutionDto, Resolution>()
+                .ForMember(dest => dest.ResolutionId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.CompletedAt, opt => opt.Ignore());
         }
     }
 }

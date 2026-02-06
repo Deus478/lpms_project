@@ -1,12 +1,23 @@
 // src/app/document-management/services/document.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpEventType, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { tap, map, catchError } from 'rxjs/operators';
-import { Document, DocumentUpload, DocumentFilter, DocumentType, DocumentStatus } from '../models/document.model';
+import { catchError, map, tap, filter, switchMap } from 'rxjs/operators';
+
+import { 
+  Document, 
+  DocumentType, 
+  DocumentStatus, 
+  DocumentUpload, 
+  DocumentFilter, 
+  DocumentCategory, 
+  AccessLevel 
+} from '../models/document.model';
+
 import { environment } from '../../../environments/environment';
 
+// Interface for the API response
 interface DocumentResponseDto {
   id: string;
   fileName?: string | null;
@@ -17,6 +28,10 @@ interface DocumentResponseDto {
   uploadedDate: string;
   isArchived: boolean;
   documentType?: string | null;
+  category?: string | null;
+  accessLevel?: string | null;
+  status?: string | null;
+  [key: string]: any;
 }
 
 @Injectable({
@@ -26,6 +41,7 @@ export class DocumentService {
   private readonly apiUrl = `${environment.apiBaseUrl}/api/documents`;
   private documentsSubject = new BehaviorSubject<Document[]>([]);
   public documents$ = this.documentsSubject.asObservable();
+  private readonly statusStoreKey = 'lpms_doc_status_overrides';
 
   // Mock data for development
   private mockDocuments: Document[] = [
@@ -45,7 +61,7 @@ export class DocumentService {
       tags: ['employment', 'contract', '2024'],
       version: 1,
       isArchived: false,
-      accessLevel: 'CONFIDENTIAL'
+      accessLevel: AccessLevel.CONFIDENTIAL
     },
     {
       id: '2',
@@ -63,7 +79,7 @@ export class DocumentService {
       tags: ['litigation', 'brief', 'civil'],
       version: 2,
       isArchived: false,
-      accessLevel: 'PRIVATE'
+      accessLevel: AccessLevel.PRIVATE
     },
     {
       id: '3',
@@ -81,7 +97,43 @@ export class DocumentService {
       version: 1,
       isArchived: true,
       archivedAt: new Date('2024-01-01'),
-      accessLevel: 'PRIVATE'
+      accessLevel: AccessLevel.PRIVATE
+    },
+    {
+      id: '4',
+      fileName: 'draft_004.pdf',
+      originalName: 'Draft Agreement.pdf',
+      fileSize: 345678,
+      mimeType: 'application/pdf',
+      documentType: DocumentType.AGREEMENT,
+      status: DocumentStatus.DRAFT,
+      caseId: '3',
+      uploadedBy: 'lawyer@law.com',
+      uploadedAt: new Date('2024-03-01'),
+      lastModified: new Date('2024-03-01'),
+      description: 'Draft agreement waiting for review',
+      tags: ['draft', 'agreement'],
+      version: 1,
+      isArchived: false,
+      accessLevel: AccessLevel.INTERNAL
+    },
+    {
+      id: '5',
+      fileName: 'draft_005.pdf',
+      originalName: 'Draft Motion.pdf',
+      fileSize: 234567,
+      mimeType: 'application/pdf',
+      documentType: DocumentType.PLEADING,
+      status: DocumentStatus.DRAFT,
+      caseId: '4',
+      uploadedBy: 'admin@law.com',
+      uploadedAt: new Date('2024-03-10'),
+      lastModified: new Date('2024-03-10'),
+      description: 'Draft motion for filing',
+      tags: ['draft', 'motion', 'pleading'],
+      version: 1,
+      isArchived: false,
+      accessLevel: AccessLevel.CONFIDENTIAL
     }
   ];
 
@@ -96,13 +148,16 @@ export class DocumentService {
 
   // Get all documents
   getAllDocuments(): Observable<Document[]> {
-    return this.http.get<DocumentResponseDto[]>(this.apiUrl).pipe(
+    // Use real API and include archived items for consistent stats with Archive page
+    return this.http.get<DocumentResponseDto[]>(`${this.apiUrl}?includeArchived=true`).pipe(
       map(dtos => dtos.map(dto => this.mapDtoToDocument(dto))),
+      map(docs => this.applyStatusOverrides(docs)),
       tap(docs => this.documentsSubject.next(docs)),
       catchError(err => {
         console.error('Error loading documents from API, falling back to mock data', err);
-        this.documentsSubject.next(this.mockDocuments);
-        return of(this.mockDocuments);
+        const withOverrides = this.applyStatusOverrides(this.mockDocuments);
+        this.documentsSubject.next(withOverrides);
+        return of(withOverrides);
       })
     );
   }
@@ -114,9 +169,10 @@ export class DocumentService {
         .filter(dto => dto.isArchived)
         .map(dto => this.mapDtoToDocument(dto))
       ),
+      map(docs => this.applyStatusOverrides(docs)),
       catchError(err => {
         console.error('Error loading archived documents from API, falling back to mock data', err);
-        return of(this.mockDocuments.filter(d => d.isArchived));
+        return of(this.applyStatusOverrides(this.mockDocuments.filter(d => d.isArchived)));
       })
     );
   }
@@ -125,6 +181,7 @@ export class DocumentService {
   getDocumentById(id: string): Observable<Document> {
     return this.http.get<DocumentResponseDto>(`${this.apiUrl}/${id}`).pipe(
       map(dto => this.mapDtoToDocument(dto)),
+      map(doc => this.applyStatusOverride(doc)),
       catchError(err => throwError(() => err))
     );
   }
@@ -132,17 +189,23 @@ export class DocumentService {
   // Get document statistics (computed client-side from latest list)
   getDocumentStats(): Observable<{
     total: number;
+    draft: number;
+    approved: number;
+    archived: number;
+    totalSize: number;
     byType: { [key: string]: number };
     byStatus: { [key: string]: number };
-    archived: number;
   }> {
     return this.getAllDocuments().pipe(
       map(docs => {
         const stats = {
           total: docs.length,
+          draft: docs.filter(d => d.status === DocumentStatus.DRAFT).length,
+          approved: docs.filter(d => d.status === DocumentStatus.APPROVED).length,
+          archived: docs.filter(d => d.isArchived || d.status === DocumentStatus.ARCHIVED).length,
+          totalSize: docs.reduce((sum, d) => sum + d.fileSize, 0),
           byType: {} as { [key: string]: number },
-          byStatus: {} as { [key: string]: number },
-          archived: docs.filter(d => d.isArchived).length
+          byStatus: {} as { [key: string]: number }
         };
 
         docs.forEach(doc => {
@@ -187,39 +250,39 @@ export class DocumentService {
     return of(filtered);
   }
 
-  // Upload document with progress tracking (wired to backend)
-  uploadDocument(upload: DocumentUpload): Observable<{ progress: number; document?: Document }> {
+  /**
+   * Upload a document with progress tracking
+   * @param upload The document upload data
+   * @returns Observable with upload progress and document
+   */
+  uploadDocument(upload: DocumentUpload): Observable<Document> {
     const formData = new FormData();
     formData.append('file', upload.file);
-    formData.append('title', upload.file.name);
+    formData.append('documentType', upload.documentType.toString());
+    formData.append('category', upload.category || DocumentCategory.OTHER);
+    formData.append('accessLevel', upload.accessLevel);
+    
+    if (upload.caseId) {
+      formData.append('caseId', upload.caseId);
+    }
     if (upload.description) {
       formData.append('description', upload.description);
     }
-    if (upload.category) {
-      formData.append('category', upload.category);
+    if (upload.tags && upload.tags.length > 0) {
+      formData.append('tags', JSON.stringify(upload.tags));
     }
 
-    return this.http.post<DocumentResponseDto>(`${this.apiUrl}/upload`, formData, {
-      reportProgress: true,
-      observe: 'events'
-    }).pipe(
-      map((event: HttpEvent<DocumentResponseDto>) => {
-        if (event.type === HttpEventType.UploadProgress) {
-          const total = event.total ?? 0;
-          const progress = total > 0 ? Math.round((event.loaded / total) * 100) : 0;
-          return { progress };
-        }
-
-        if (event.type === HttpEventType.Response && event.body) {
-          const doc = this.mapDtoToDocument(event.body);
-          const current = this.documentsSubject.value;
-          this.documentsSubject.next([...current, doc]);
-          return { progress: 100, document: doc };
-        }
-
-        return { progress: 0 };
+    return this.http.post<DocumentResponseDto>(`${this.apiUrl}/upload`, formData).pipe(
+      map(dto => this.mapDtoToDocument(dto)),
+      tap(document => {
+        // Update the documents list with the newly uploaded document
+        const current = this.documentsSubject.value;
+        this.documentsSubject.next([...current, document]);
       }),
-      catchError(err => throwError(() => err))
+      catchError(error => {
+        console.error('Upload failed:', error);
+        return throwError(() => new Error('Failed to upload document'));
+      })
     );
   }
 
@@ -238,7 +301,7 @@ export class DocumentService {
       lastModified: new Date(),
       version: 1,
       isArchived: false,
-      accessLevel: doc.accessLevel || 'PRIVATE',
+      accessLevel: doc.accessLevel || AccessLevel.PRIVATE,
       caseId: doc.caseId,
       description: doc.description,
       tags: doc.tags
@@ -259,6 +322,15 @@ export class DocumentService {
   // Archive document
   archiveDocument(id: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/archive`, null).pipe(
+      tap(() => {
+        // Optimistically update local cache if present
+        const docs = this.documentsSubject.value;
+        const idx = docs.findIndex(d => d.id === id);
+        if (idx !== -1) {
+          docs[idx] = { ...docs[idx], isArchived: true, archivedAt: new Date() };
+          this.documentsSubject.next([...docs]);
+        }
+      }),
       catchError(err => throwError(() => err))
     );
   }
@@ -266,6 +338,16 @@ export class DocumentService {
   // Restore archived document
   restoreDocument(id: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/restore`, null).pipe(
+      tap(() => {
+        const docs = this.documentsSubject.value;
+        const idx = docs.findIndex(d => d.id === id);
+        if (idx !== -1) {
+          const updated = { ...docs[idx] };
+          updated.isArchived = false;
+          delete updated.archivedAt;
+          this.documentsSubject.next([...docs.slice(0, idx), updated, ...docs.slice(idx + 1)]);
+        }
+      }),
       catchError(err => throwError(() => err))
     );
   }
@@ -273,6 +355,10 @@ export class DocumentService {
   // Delete document permanently
   deleteDocument(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        const docs = this.documentsSubject.value.filter(d => d.id !== id);
+        this.documentsSubject.next(docs);
+      }),
       catchError(err => throwError(() => err))
     );
   }
@@ -294,72 +380,199 @@ export class DocumentService {
     return throwError(() => new Error('Document not found'));
   }
 
+  // Update status locally (manual control) and reflect in cache immediately
+  updateDocumentStatus(id: string, status: DocumentStatus): Observable<Document> {
+    const docs = this.documentsSubject.value;
+    const idx = docs.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      const updated: Document = { ...docs[idx], status, lastModified: new Date() };
+      const next = [...docs];
+      next[idx] = updated;
+      this.documentsSubject.next(next);
+      const mockIdx = this.mockDocuments.findIndex(d => d.id === id);
+      if (mockIdx !== -1) {
+        this.mockDocuments[mockIdx] = updated;
+      }
+      this.setStatusOverride(id, status);
+      return of(updated);
+    }
+
+    // If not found in cache, fetch and insert updated copy
+    return this.getDocumentById(id).pipe(
+      map(doc => {
+        const updated = { ...doc, status, lastModified: new Date() } as Document;
+        const list = this.documentsSubject.value;
+        this.documentsSubject.next([...list, updated]);
+        this.setStatusOverride(id, status);
+        return updated;
+      })
+    );
+  }
+
+  /**
+   * Map a DocumentResponseDto to a Document
+   */
   private mapDtoToDocument(dto: DocumentResponseDto): Document {
-    const uploadedAt = new Date(dto.uploadedDate);
-    const lastModified = uploadedAt;
+    // Safely map the document type
+    let documentType: DocumentType = DocumentType.OTHER;
+    if (dto.documentType) {
+      const type = Object.values(DocumentType).find(
+        t => t.toString() === dto.documentType
+      );
+      if (type) documentType = type;
+    }
+
+    // Safely map the category
+    let category: DocumentCategory = DocumentCategory.OTHER;
+    if (dto.category) {
+      const cat = Object.values(DocumentCategory).find(
+        c => c.toString() === dto.category
+      );
+      if (cat) category = cat;
+    }
+
+    // Safely map the access level
+    let accessLevel: AccessLevel = AccessLevel.PRIVATE;
+    if (dto.accessLevel) {
+      const normalized = String(dto.accessLevel).trim().toUpperCase();
+      const level = Object.values(AccessLevel).find(
+        l => l.toString().toUpperCase() === normalized
+      );
+      if (level) accessLevel = level;
+    }
+
+    // Safely map the status (do not infer from isArchived)
+    let status: DocumentStatus = DocumentStatus.APPROVED; // Default if API omits
+    if (dto.status) {
+      const statusEnum = Object.values(DocumentStatus).find(
+        s => s.toString() === dto.status
+      );
+      if (statusEnum) status = statusEnum;
+    }
 
     return {
       id: dto.id,
-      fileName: dto.fileName ?? 'document',
-      originalName: dto.fileName ?? 'document',
+      fileName: dto.fileName || 'unnamed',
+      originalName: dto.fileName || 'Unnamed Document',
       fileSize: dto.fileSizeBytes,
-      mimeType: dto.fileExtension ? this.mapExtensionToMime(dto.fileExtension) : 'application/octet-stream',
-      documentType: this.mapDocumentType(dto.documentType),
-      status: dto.isArchived ? DocumentStatus.ARCHIVED : DocumentStatus.APPROVED,
-      caseId: undefined,
-      uploadedBy: dto.uploadedBy ?? '',
-      uploadedAt,
-      lastModified,
-      description: dto.description ?? '',
+      mimeType: this.getMimeType(dto.fileExtension || ''),
+      documentType,
+      status,
+      uploadedBy: dto.uploadedBy || 'Unknown',
+      uploadedAt: new Date(dto.uploadedDate),
+      lastModified: new Date(dto.uploadedDate),
+      description: dto.description || undefined,
       tags: [],
       version: 1,
-      isArchived: dto.isArchived,
-      archivedAt: dto.isArchived ? uploadedAt : undefined,
-      accessLevel: 'PRIVATE',
-      downloadUrl: undefined,
-      category: undefined,
-      isEncrypted: false,
-      checksum: undefined,
-      archivedBy: undefined,
-      lastModifiedBy: undefined,
-      lastModifiedAt: lastModified
+      isArchived: dto.isArchived || false,
+      accessLevel,
+      downloadUrl: `${this.apiUrl}/${dto.id}/download`,
+      category
     };
   }
 
-  private mapDocumentType(type?: string | null): DocumentType {
-    if (!type) {
-      return DocumentType.OTHER;
+  // ----- Status override helpers (persisted in localStorage) -----
+  private loadStatusOverrides(): Record<string, DocumentStatus> {
+    try {
+      const raw = localStorage.getItem(this.statusStoreKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
     }
-    const normalized = type.toLowerCase();
-    if (normalized.includes('contract')) return DocumentType.CONTRACT;
-    if (normalized.includes('brief')) return DocumentType.BRIEF;
-    if (normalized.includes('evidence')) return DocumentType.EVIDENCE;
-    if (normalized.includes('correspondence')) return DocumentType.CORRESPONDENCE;
-    if (normalized.includes('pleading')) return DocumentType.PLEADING;
-    if (normalized.includes('memo')) return DocumentType.MEMO;
-    if (normalized.includes('agreement')) return DocumentType.AGREEMENT;
-    if (normalized.includes('order')) return DocumentType.COURT_ORDER;
-    return DocumentType.OTHER;
   }
 
-  private mapExtensionToMime(ext: string): string {
-    const lower = ext.toLowerCase();
-    if (lower === '.pdf') return 'application/pdf';
-    if (lower === '.doc' || lower === '.docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    if (lower === '.xls' || lower === '.xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    if (lower === '.jpg' || lower === '.jpeg') return 'image/jpeg';
-    if (lower === '.png') return 'image/png';
-    if (lower === '.gif') return 'image/gif';
-    if (lower === '.txt') return 'text/plain';
-    return 'application/octet-stream';
+  private saveStatusOverrides(overrides: Record<string, DocumentStatus>): void {
+    try {
+      localStorage.setItem(this.statusStoreKey, JSON.stringify(overrides));
+    } catch {
+      // ignore storage errors
+    }
   }
 
-  // Format file size helper
+  private getStatusOverride(id: string): DocumentStatus | undefined {
+    const overrides = this.loadStatusOverrides();
+    return overrides[id];
+  }
+
+  private setStatusOverride(id: string, status: DocumentStatus): void {
+    const overrides = this.loadStatusOverrides();
+    overrides[id] = status;
+    this.saveStatusOverrides(overrides);
+  }
+
+  private applyStatusOverride(doc: Document): Document {
+    const override = this.getStatusOverride(doc.id);
+    return override ? { ...doc, status: override } : doc;
+  }
+
+  private applyStatusOverrides(docs: Document[]): Document[] {
+    if (!docs || docs.length === 0) return docs;
+    const overrides = this.loadStatusOverrides();
+    if (!overrides || Object.keys(overrides).length === 0) return docs;
+    return docs.map(d => (overrides[d.id] ? { ...d, status: overrides[d.id] } : d));
+  }
+
+  /**
+   * Get MIME type from file extension
+   */
+  private getMimeType(extension: string): string {
+    const ext = extension.toLowerCase().replace(/^\./, '');
+    const mimeTypes: Record<string, string> = {
+      // Documents
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'dotx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'ppt': 'application/vnd.ms-powerpoint',
+      'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'rtf': 'application/rtf',
+      'odt': 'application/vnd.oasis.opendocument.text',
+      'ods': 'application/vnd.oasis.opendocument.spreadsheet',
+      'odp': 'application/vnd.oasis.opendocument.presentation',
+      'csv': 'text/csv',
+      'txt': 'text/plain',
+      
+      // Images
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'bmp': 'image/bmp',
+      'svg': 'image/svg+xml',
+      'tiff': 'image/tiff',
+      'webp': 'image/webp',
+      
+      // Archives
+      'zip': 'application/zip',
+      'rar': 'application/x-rar-compressed',
+      '7z': 'application/x-7z-compressed',
+      'tar': 'application/x-tar',
+      'gz': 'application/gzip',
+      
+      // Audio/Video
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'mp4': 'video/mp4',
+      'webm': 'video/webm',
+      'mov': 'video/quicktime',
+      'avi': 'video/x-msvideo'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
+  }
+  
+  /**
+   * Format file size in bytes to human readable format
+   */
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
+    
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }

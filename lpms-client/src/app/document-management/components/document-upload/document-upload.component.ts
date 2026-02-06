@@ -1,9 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { Observable, BehaviorSubject, Subscription, of, throwError } from 'rxjs';
+import { catchError, map, tap, finalize } from 'rxjs/operators';
+
 import { DocumentService } from '../../services/document.service';
-import { DocumentCategory, AccessLevel, DocumentType } from '../../models/document.model';
+import { DocumentCategory, AccessLevel, DocumentType, Document, DocumentUpload } from '../../models/document.model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-document-upload',
@@ -14,20 +19,29 @@ import { DocumentCategory, AccessLevel, DocumentType } from '../../models/docume
 })
 export class DocumentUploadComponent {
   selectedFile: File | null = null;
+  documentType: DocumentType = DocumentType.OTHER;
   category: DocumentCategory = DocumentCategory.OTHER;
-  accessLevel: AccessLevel = AccessLevel.PRIVATE; // Changed from INTERNAL
+  accessLevel: AccessLevel = AccessLevel.PRIVATE;
   caseId: string = '';
   description: string = '';
   tags: string = '';
-  AccessLevel = AccessLevel;           // ✅ expose enum for template
-  DocumentCategory = DocumentCategory; // ✅ expose if used in HTML
+  
+  // Expose enums to template
+  AccessLevel = AccessLevel;
+  DocumentCategory = DocumentCategory;
+  DocumentType = DocumentType;
 
   isUploading = false;
   uploadProgress = 0;
   dragOver = false;
 
+  // Available options for dropdowns
+  documentTypes = Object.values(DocumentType);
   categories = Object.values(DocumentCategory);
   accessLevels = Object.values(AccessLevel);
+  
+  // Upload state
+  private uploadSubscription: Subscription | null = null;
 
   // Allowed file types
   allowedTypes = [
@@ -46,7 +60,8 @@ export class DocumentUploadComponent {
 
   constructor(
     private documentService: DocumentService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {}
 
   onFileSelected(event: any): void {
@@ -111,40 +126,58 @@ export class DocumentUploadComponent {
     this.isUploading = true;
     this.uploadProgress = 0;
 
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 90) {
-        clearInterval(progressInterval);
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+    formData.append('documentType', this.documentType.toString());
+    formData.append('category', this.category.toString());
+    formData.append('accessLevel', this.accessLevel.toString());
+    
+    if (this.caseId) {
+      formData.append('caseId', this.caseId);
+    }
+    if (this.description) {
+      formData.append('description', this.description);
+    }
+    if (this.tags) {
+      formData.append('tags', JSON.stringify(this.tags.split(',').map(t => t.trim())));
+    }
+
+    // Cancel any existing upload
+    if (this.uploadSubscription) {
+      this.uploadSubscription.unsubscribe();
+    }
+
+    this.uploadSubscription = this.http.post<Document>(
+      `${environment.apiBaseUrl}/api/documents/upload`,
+      formData,
+      {
+        reportProgress: true,
+        observe: 'events'
       }
-    }, 200);
-
-    // ✅ Added documentType logic
-    const uploadDto = {
-      file: this.selectedFile,
-      documentType: this.getDocumentTypeFromFile(this.selectedFile), // <-- Added line
-      category: this.category,
-     accessLevel: this.accessLevel as unknown as 'PUBLIC' | 'PRIVATE' | 'CONFIDENTIAL', // ✅ type cast fix
-      caseId: this.caseId || undefined,
-      description: this.description || undefined,
-      tags: this.tags ? this.tags.split(',').map(t => t.trim()) : []
-    };
-
-    this.documentService.uploadDocument(uploadDto).subscribe({
-      next: (document) => {
-        clearInterval(progressInterval);
-        this.uploadProgress = 100;
-        setTimeout(() => {
-          this.isUploading = false;
+    ).pipe(
+      tap(event => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.uploadProgress = Math.round(100 * event.loaded / event.total);
+        }
+      }),
+      catchError(error => {
+        console.error('Upload error:', error);
+        return throwError(() => new Error('Upload failed. Please try again.'));
+      }),
+      finalize(() => {
+        this.isUploading = false;
+      })
+    ).subscribe({
+      next: (event) => {
+        if (event.type === HttpEventType.Response) {
+          // Upload complete
+          this.uploadProgress = 100;
           this.router.navigate(['/document-management']);
-        }, 500);
+        }
       },
       error: (error) => {
-        clearInterval(progressInterval);
-        console.error('Upload error:', error);
-        this.isUploading = false;
-        this.uploadProgress = 0;
-        alert('Failed to upload document. Please try again.');
+        console.error('Upload failed:', error);
+        alert(error.message || 'Failed to upload document. Please try again.');
       }
     });
   }
@@ -165,14 +198,42 @@ export class DocumentUploadComponent {
     return '📎';
   }
 
-  // ✅ New helper method to determine document type
+  // ✅ Helper method to determine document type
+  // Helper to process upload events with proper typing
+  private getUploadEventMessage(event: HttpEvent<any>) {
+    if (event.type === HttpEventType.UploadProgress && event.total) {
+      return { 
+        type: 'progress' as const, 
+        loaded: event.loaded, 
+        total: event.total 
+      };
+    } else if (event.type === HttpEventType.Response) {
+      return { 
+        type: 'complete' as const, 
+        response: event.body 
+      };
+    }
+    return { 
+      type: 'unknown' as const, 
+      event 
+    };
+  }
+
+  // Clean up subscriptions
+  ngOnDestroy() {
+    if (this.uploadSubscription) {
+      this.uploadSubscription.unsubscribe();
+    }
+  }
+
   private getDocumentTypeFromFile(file: File): DocumentType {
-    const ext = file.name.split('.').pop()?.toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
     const mimeType = file.type.toLowerCase();
 
-    if (mimeType.includes('pdf') || ext === 'pdf') return DocumentType.BRIEF;
-    if (mimeType.includes('word') || ext === 'doc' || ext === 'docx') return DocumentType.PLEADING;
-    if (ext === 'contract') return DocumentType.CONTRACT;
+    if (mimeType.includes('pdf') || ext === 'pdf') return DocumentType.OTHER;
+    if (mimeType.includes('word') || ext === 'doc' || ext === 'docx') return DocumentType.MEMO;
+    if (ext === 'contract' || file.name.toLowerCase().includes('contract')) return DocumentType.CONTRACT;
+    if (ext === 'brief' || file.name.toLowerCase().includes('brief')) return DocumentType.BRIEF;
     return DocumentType.OTHER;
   }
 }

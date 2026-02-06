@@ -32,12 +32,12 @@
 }
 
 .drop-zone.drag-over {
-  border-color: #007bff;
-  background-color: #f0f8ff;
+  border-color: var(--primary);
+  background-color: var(--primary-bg);
 }
 
 .drop-zone-content {
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .upload-icon {
@@ -149,7 +149,7 @@
 
 .form-control:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--primary);
 }
 
 textarea.form-control {
@@ -185,12 +185,12 @@ textarea.form-control {
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {
@@ -238,7 +238,7 @@ textarea.form-control {
 
 .progress-bar {
   height: 100%;
-  background-color: #007bff;
+  background-color: var(--primary);
   transition: width 0.3s;
   border-radius: 4px;
 }
@@ -246,12 +246,12 @@ textarea.form-control {
 .progress-content p {
   font-size: 18px;
   font-weight: 600;
-  color: #007bff;
+  color: var(--primary);
 }
 
 .security-notice {
-  background-color: #e8f4f8;
-  border-left: 4px solid #007bff;
+  background-color: var(--primary-bg);
+  border-left: 4px solid var(--primary);
   padding: 20px;
   border-radius: 4px;
 }
